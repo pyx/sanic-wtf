@@ -48,6 +48,11 @@ Changelog
 
 - 0.1.0
 
+  Made :attr:`SanicWTF.Form` always available so that one can create the form
+  classes before calling :meth:`SanicWTF.init_app`
+
+- 0.1.0
+
   First public release.
 
 

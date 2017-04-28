@@ -19,39 +19,17 @@ def to_bytes(text, encoding='utf8'):
 
 class SanicWTF:
     """The WTForms helper"""
+    bound = False
     #: Function that returns a dict-like session object when given the current
     #: request.  Override this to customize how the session is accessed.
     get_csrf_context = itemgetter('session')
 
-    @property
-    def Form(self):
-        """Form class derived from :code:`wtforms.form.Form`.
-
-        This will only be avaliable after the :class:`SanicWTF` instance was
-        initialized with a :code:`Sanic` application object.
-        """
-        if not self._form_class:
-            raise NotImplementedError(
-                'please setup this instance with a Sanic app to use this form')
-        return self._form_class
+    #: Form class derived from :code:`wtforms.form.Form`.
+    Form = Form
 
     def __init__(self, app=None):
         self.app = app
-        self._form_class = None
-        if app:
-            self.init_app(app)
-
-    def init_app(self, app):
-        """Setup the form class using settings from :code:`app.config`
-
-        This method should be called only once, either explicitly or
-        implicitly by passing in the :code:`app` object when creating
-        :class:`SanicWTF` instance.
-        """
-        if self._form_class:
-            raise RuntimeError(
-                'SanicWTF instance can only be initialized with an app once')
-
+        self.bound = False
         # NOTE:
         # have to create new class each time, we don't want to share states
         # between instances of SanicWTF.
@@ -70,7 +48,23 @@ class SanicWTF:
             def hidden_tag(self):
                 return getattr(self, self.Meta.csrf_field_name)
 
-        self._form_class = SanicForm
+        self.Form = SanicForm
+
+        if app:
+            self.init_app(app)
+
+
+    def init_app(self, app):
+        """Setup the form class using settings from :code:`app.config`
+
+        This method should be called only once, either explicitly or
+        implicitly by passing in the :code:`app` object when creating
+        :class:`SanicWTF` instance.
+        """
+        if self.bound:
+            raise RuntimeError(
+                'SanicWTF instance can only be initialized with an app once')
+        self.bound = True
 
         @app.listener('after_server_start')
         async def setup_csrf(app, loop):

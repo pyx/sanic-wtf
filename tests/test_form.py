@@ -22,22 +22,6 @@ def render_form(form):
     </form>""".format(''.join(str(field) for field in form))
 
 
-def test_form_class_unavailable_before_init():
-    wtf = SanicWTF()
-
-    with pytest.raises(NotImplementedError):
-        class Form(wtf.Form):
-            pass
-
-
-def test_form_class_available_after_init():
-    app = Sanic('test')
-    wtf = SanicWTF(app)
-
-    class Form(wtf.Form):
-        pass
-
-
 def test_form_validation():
     app = Sanic('test')
     wtf = SanicWTF(app)

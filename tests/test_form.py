@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import pytest
 
 from sanic import Sanic, response
 from wtforms.validators import DataRequired, Length

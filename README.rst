@@ -73,14 +73,15 @@ Form Validation
 .. code-block:: python
 
   @app.route('/', methods=['GET', 'POST'])
-  def index(request):
+  async def index(request):
       form = LoginForm(request.form)
       if request.method == 'POST' and form.validate():
           name = form.name.data
           password = form.password.data
           # check user password, log in user, etc.
           return response.redirect('/profile')
-      return response.html('index.html', form=form)
+      # here, render_template is a function that render template with context
+      return response.html(await render_template('index.html', form=form))
 
 
 For more details, please see documentation.

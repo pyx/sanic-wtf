@@ -25,23 +25,52 @@ Installation
 How to use it
 -------------
 
+Intialization
+^^^^^^^^^^^^^
+
 .. code-block:: python
 
-  from sanic import Sanic
+  from sanic import Sanic, response
   from sanic_wtf import SanicWTF
   from wtforms import PasswordField, StringField, SubmitField
   from wtforms.validators import DataRequired
-
+  from some_session_package import session_middleware
 
   app = Sanic(__name__)
+
+  # either WTF_CSRF_SECRET_KEY or SECRET_KEY should be set
+  app.config['WTF_CSRF_SECRET_KEY'] = 'top secret!'
+
+  @app.middleware('request')
+  async def add_session_to_request(request):
+      ...
+
+  # then register SanicWTF
   wtf = SanicWTF(app)
 
+.. note::
+
+  Since SanicWTF needs 'session' in request, please make sure the 'session'
+  exists before SanicWTF's middleware gets run, that usually means register
+  whatever session middleware before register SanicWTF's by calling
+  :code:`init_app`.
+
+
+Defining Forms
+^^^^^^^^^^^^^^
+
+.. code-block:: python
 
   class LoginForm(wtf.Form):
       name = StringField('Name', validators=[DataRequired()])
       password = PasswordField('Password', validators=[DataRequired()])
       submit = SubmitField('Sign In')
 
+
+Form Validation
+^^^^^^^^^^^^^^^
+
+.. code-block:: python
 
   @app.route('/', methods=['GET', 'POST'])
   def index(request):
@@ -52,9 +81,6 @@ How to use it
           # check user password, log in user, etc.
           return response.redirect('/profile')
       return response.html('index.html', form=form)
-
-  if __name__ == '__main__':
-      app.run(debug=True)
 
 
 For more details, please see documentation.

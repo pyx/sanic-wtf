@@ -4,7 +4,7 @@ from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 
-__version__ = '0.2.0.dev0'
+__version__ = '0.2.0'
 
 
 def to_bytes(text, encoding='utf8'):
@@ -30,6 +30,7 @@ class SanicWTF:
     def __init__(self, app=None):
         self.app = app
         self.bound = False
+
         # NOTE:
         # have to create new class each time, we don't want to share states
         # between instances of SanicWTF.
@@ -52,7 +53,6 @@ class SanicWTF:
 
         if app:
             self.init_app(app)
-
 
     def init_app(self, app):
         """Setup the form class using settings from :code:`app.config`

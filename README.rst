@@ -74,7 +74,7 @@ Form Validation
 
   @app.route('/', methods=['GET', 'POST'])
   def index(request):
-      form = LoginForm(request.form):
+      form = LoginForm(request.form)
       if request.method == 'POST' and form.validate():
           name = form.name.data
           password = form.password.data

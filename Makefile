@@ -15,6 +15,7 @@ help:
 	@echo '  help         : display this help text.'
 	@echo '  install      : install package $(NAME).'
 	@echo '  test         : run all tests.'
+	@echo '  coverage     : analyze test coverage.'
 	@echo '  tox          : run all tests with tox.'
 	@echo '  docs         : generate documentation files.'
 	@echo '  example      : run example.'
@@ -61,6 +62,10 @@ release: quality tox
 .PHONY: test
 test:
 	py.test
+
+.PHONY: coverage
+coverage:
+	py.test --cov sanic_wtf --cov-report=html
 
 .PHONY: tox
 tox:

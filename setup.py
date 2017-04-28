@@ -44,6 +44,7 @@ setup(
             'aiohttp',
             'flake8',
             'pytest',
+            'pytest-cov',
             'Sphinx',
             'tox',
             'twine',

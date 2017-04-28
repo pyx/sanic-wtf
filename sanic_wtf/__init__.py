@@ -4,7 +4,7 @@ from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 
-__version__ = '0.2.0'
+__version__ = '0.3.0.dev0'
 
 
 def to_bytes(text, encoding='utf8'):

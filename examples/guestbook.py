@@ -25,7 +25,7 @@ class FeedbackForm(wtf.Form):
 
 
 @app.route('/', methods=['GET', 'POST'])
-def index(request):
+async def index(request):
     form = FeedbackForm(request.form)
     if request.method == 'POST' and form.validate():
         note = form.note.data
@@ -53,7 +53,7 @@ def index(request):
 
 
 @app.route('/fail', methods=['GET', 'POST'])
-def fail(request):
+async def fail(request):
     form = FeedbackForm(request.form)
     if request.method == 'POST' and form.validate():
         note = form.note.data

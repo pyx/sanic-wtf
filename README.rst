@@ -79,8 +79,8 @@ Form Validation
           name = form.name.data
           password = form.password.data
           # check user password, log in user, etc.
-          return response.redirect('/profile')
-      return response.html('index.html', form=form)
+          return request.redirect('/profile')
+      return request.html('index.html', form=form)
 
 
 For more details, please see documentation.

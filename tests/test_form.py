@@ -38,7 +38,6 @@ def test_form_validation():
         if request.method == 'POST' and form.validate():
             return response.text('validated')
         content = render_form(form)
-        print(content)
         return response.html(content)
 
     req, resp = app.test_client.get('/')
@@ -78,7 +77,6 @@ def test_form_csrf_validation():
         if request.method == 'POST' and form.validate():
             return response.text('validated')
         content = render_form(form)
-        print(content)
         return response.html(content)
 
     req, resp = app.test_client.get('/')

@@ -48,6 +48,9 @@ class SanicWTF:
             @property
             def hidden_tag(self):
                 return getattr(self, self.Meta.csrf_field_name)
+            
+            def validate_on_submit(self, request):
+                return request.method == 'POST' and form.validate()
 
         self.Form = SanicForm
 
@@ -61,6 +64,7 @@ class SanicWTF:
         implicitly by passing in the :code:`app` object when creating
         :class:`SanicWTF` instance.
         """
+        self.app = app
         if self.bound:
             raise RuntimeError(
                 'SanicWTF instance can only be initialized with an app once')

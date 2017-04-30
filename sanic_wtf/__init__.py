@@ -48,9 +48,6 @@ class SanicWTF:
             @property
             def hidden_tag(self):
                 return getattr(self, self.Meta.csrf_field_name)
-            
-            def validate_on_submit(self, request):
-                return request.method == 'POST' and form.validate()
 
         self.Form = SanicForm
 

@@ -61,6 +61,7 @@ class SanicWTF:
         implicitly by passing in the :code:`app` object when creating
         :class:`SanicWTF` instance.
         """
+        self.app = app
         if self.bound:
             raise RuntimeError(
                 'SanicWTF instance can only be initialized with an app once')

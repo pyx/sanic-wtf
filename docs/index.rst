@@ -55,6 +55,16 @@ Full Example
 Changelog
 =========
 
+- 0.3.0
+
+  **backward incompatible upgrade**
+
+  Re-designed the API to fixed #6 - possible race condition. The new API is
+  much simplified, easier to use, while still getting things done, and more.
+
+  Added new setting: WTF_CSRF_TIME_LIMIT
+  Added new method :meth:`validate_on_submit` in the style of Flask-WTF.
+
 - 0.2.0
 
   Made :attr:`SanicWTF.Form` always available so that one can create the form

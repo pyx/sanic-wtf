@@ -27,11 +27,20 @@ Option                           Description
                                  If it is unset, :code:`SECRET_KEY` will be
                                  used instead.  Either one of these have to be
                                  set to enable CSRF protection.
+:code:`WTF_CSRF_TIME_LIMIT`      How long CSRF tokens are valid for, in seconds.
+                                 Default is `1800`. (Half an hour)
 ================================ =============================================
 
 
 API
 ===
+
+.. note::
+  For users of versions prior to 0.3.0, there is backward incompatible changes
+  in API.  The module-wise helper object is not longer required, the new form
+  :class:`SanicForm` is smart enough to figure out how to get user defined
+  settings.
+
 
 .. automodule:: sanic_wtf
   :members:

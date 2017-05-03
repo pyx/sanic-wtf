@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-from operator import itemgetter
+from datetime import timedelta
+from itertools import chain
+
 from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
+from wtforms.widgets import HiddenInput
 
 __version__ = '0.3.0.dev0'
+
+__all__ = ['SanicForm']
 
 
 def to_bytes(text, encoding='utf8'):
@@ -13,82 +18,86 @@ def to_bytes(text, encoding='utf8'):
     return bytes(text)
 
 
-# NOTE
-# This is dark magic, the Meta class is constantly changing...
-# You've been warned.
+class cached_property:
+    """Readonly properties that will be calcuated only once"""
+    def __init__(self, getter):
+        self.getter = getter
+        self.__doc__ = getter.__doc__
 
-class SanicWTF:
-    """The WTForms helper"""
-    bound = False
-    #: Function that returns a dict-like session object when given the current
-    #: request.  Override this to customize how the session is accessed.
-    get_csrf_context = itemgetter('session')
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        else:
+            attr = self.getter(instance)
+            setattr(instance, self.getter.__name__, attr)
+            return attr
 
-    #: Form class derived from :code:`wtforms.form.Form`.
-    Form = Form
 
-    def __init__(self, app=None):
-        self.app = app
-        self.bound = False
+def meta_for_request(request):
+    """Create a meta dict object with settings from request.app"""
+    meta = {'csrf': False}
+    if not request:
+        return meta
+    config = request.app.config
 
-        # NOTE:
-        # have to create new class each time, we don't want to share states
-        # between instances of SanicWTF.
-        class SanicForm(Form):
-            """Form with session-based CSRF Protection"""
-            class Meta(DefaultMeta):
-                csrf_class = SessionCSRF
-                csrf_field_name = 'csrf_token'
+    csrf = meta['csrf'] = config.get('WTF_CSRF_ENABLED', True)
+    if not csrf:
+        return meta
 
-                @property
-                def csrf(self):
-                    raise NotImplementedError(
-                        'used form outside of running app')
+    meta['csrf_field_name'] = config.get('WTF_CSRF_FIELD_NAME', 'csrf_token')
+    secret = config.get('WTF_CSRF_SECRET_KEY')
+    if secret is None:
+        secret = config.get('SECRET_KEY')
+    if not secret:
+        raise ValueError(
+            'CSRF protection needs either WTF_CSRF_SECRET_KEY or SECRET_KEY')
+    meta['csrf_secret'] = to_bytes(secret)
 
-            @property
-            def hidden_tag(self):
-                return getattr(self, self.Meta.csrf_field_name)
+    seconds = config.get('WTF_CSRF_TIME_LIMIT', 1800)
+    meta['csrf_time_limit'] = timedelta(seconds=seconds)
 
-        self.Form = SanicForm
+    name = config.get('WTF_CSRF_CONTEXT_NAME', 'session')
+    meta['csrf_context'] = request[name]
+    return meta
 
-        if app:
-            self.init_app(app)
 
-    def init_app(self, app):
-        """Setup the form class using settings from :code:`app.config`
+SUBMIT_WORDS = frozenset({'DELETE', 'PATCH', 'POST', 'PUT'})
 
-        This method should be called only once, either explicitly or
-        implicitly by passing in the :code:`app` object when creating
-        :class:`SanicWTF` instance.
-        """
-        self.app = app
-        if self.bound:
-            raise RuntimeError(
-                'SanicWTF instance can only be initialized with an app once')
-        self.bound = True
 
-        @app.listener('after_server_start')
-        async def setup_csrf(app, loop):
-            """Get settings from app and setup the Form class accordingly"""
-            conf = app.config
-            Meta = self.Form.Meta
-            Meta.csrf = conf.get('WTF_CSRF_ENABLED', True)
-            if not Meta.csrf:
-                return
+class SanicForm(Form):
+    """Form with session-based CSRF Protection.
 
-            secret = conf.get('WTF_CSRF_SECRET_KEY', conf.get('SECRET_KEY'))
-            if not secret:
-                raise ValueError(
-                    'please set either WTF_CSRF_SECRET_KEY or SECRET_KEY')
-            Meta.csrf_secret = to_bytes(secret)
+    Upon initialization, the form instance will setup CSRF protection with
+    settings fetched from provided Sanic style request objerct.  With no
+    request object provided, CSRF protection will be disabled.
+    """
+    class Meta(DefaultMeta):
+        csrf = True
+        csrf_class = SessionCSRF
 
-            field_name = conf.get('WTF_CSRF_FIELD_NAME', Meta.csrf_field_name)
-            Meta.csrf_field_name = field_name
+    @cached_property
+    def hidden_tag(self):
+        """Render hidden input fields of the form"""
+        fields = (str(f) for f in self
+                  if f and isinstance(f.widget, HiddenInput))
+        return '\n'.join(fields)
 
-        @app.middleware('request')
-        async def setup_csrf_context(request):
-            """Setup the csrf_context to be used for CSRF Protection"""
-            Meta = self.Form.Meta
-            if not Meta.csrf:
-                return
-            Meta.csrf_context = self.get_csrf_context(request)
+    def __init__(self, request=None, *args, meta=None, **kwargs):
+        """"""
+        form_meta = meta_for_request(request)
+        form_meta.update(meta or {})
+        kwargs['meta'] = form_meta
+
+        self.request = request
+        if request is None:
+            super().__init__(*args, **kwargs)
+            return
+
+        formdata = kwargs.pop('formdata', getattr(request, 'form', None))
+        # signature of wtforms.Form (formdata, obj, prefix, ...)
+        super().__init__(*chain([formdata], args), **kwargs)
+
+    def validate_on_submit(self):
+        """Return `True` if this form is submited and all fields verified"""
+        request = self.request
+        return request and request.method in SUBMIT_WORDS and self.validate()

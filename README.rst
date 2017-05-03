@@ -19,22 +19,19 @@ Installation
 
 .. code-block:: sh
 
-  pip install Sanic-WTF
+  pip install --upgrade Sanic-WTF
 
 
 How to use it
 -------------
 
-Intialization
-^^^^^^^^^^^^^
+
+Intialization (of Sanic)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-  from sanic import Sanic, response
-  from sanic_wtf import SanicWTF
-  from wtforms import PasswordField, StringField, SubmitField
-  from wtforms.validators import DataRequired
-  from some_session_package import session_middleware
+  from sanic import Sanic
 
   app = Sanic(__name__)
 
@@ -43,17 +40,7 @@ Intialization
 
   @app.middleware('request')
   async def add_session_to_request(request):
-      ...
-
-  # then register SanicWTF
-  wtf = SanicWTF(app)
-
-.. note::
-
-  Since SanicWTF needs 'session' in request, please make sure the 'session'
-  exists before SanicWTF's middleware gets run, that usually means register
-  whatever session middleware before register SanicWTF's by calling
-  :code:`init_app`.
+      # setup session
 
 
 Defining Forms
@@ -61,10 +48,18 @@ Defining Forms
 
 .. code-block:: python
 
-  class LoginForm(wtf.Form):
+  from sanic_wtf import SanicForm
+  from wtforms import PasswordField, StringField, SubmitField
+  from wtforms.validators import DataRequired
+
+  class LoginForm(SanicForm):
       name = StringField('Name', validators=[DataRequired()])
       password = PasswordField('Password', validators=[DataRequired()])
       submit = SubmitField('Sign In')
+
+That's it, just subclass `SanicForm` and later on passing in the current
+`request` object when you instantiate the form class.  Sanic-WTF will do the
+trick.
 
 
 Form Validation
@@ -72,9 +67,11 @@ Form Validation
 
 .. code-block:: python
 
+  from sanic import response
+
   @app.route('/', methods=['GET', 'POST'])
   async def index(request):
-      form = LoginForm(request.form)
+      form = LoginForm(request)
       if request.method == 'POST' and form.validate():
           name = form.name.data
           password = form.password.data
@@ -82,6 +79,11 @@ Form Validation
           return response.redirect('/profile')
       # here, render_template is a function that render template with context
       return response.html(await render_template('index.html', form=form))
+
+
+.. note::
+  For WTForms users: please note that `SanicForm` requires the whole `request`
+  object instead of some sort of `MultiDict`.
 
 
 For more details, please see documentation.

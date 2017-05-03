@@ -1,6 +1,6 @@
 from datetime import datetime
 from sanic import Sanic, response
-from sanic_wtf import SanicWTF
+from sanic_wtf import SanicForm
 from wtforms import SubmitField, TextField
 from wtforms.validators import DataRequired, Length
 
@@ -8,7 +8,6 @@ from wtforms.validators import DataRequired, Length
 app = Sanic(__name__)
 app.config['SECRET_KEY'] = 'top secret !!!'
 
-wtf = SanicWTF(app)
 
 # NOTE
 # session should be setup somewhere, SanicWTF expects request['session'] is a
@@ -16,17 +15,19 @@ wtf = SanicWTF(app)
 # For demonstration purpose, we use a mock-up session object by providing our
 # own get_csrf_context
 session = {}
-wtf.get_csrf_context = lambda _: session
+@app.middleware('request')
+async def add_session(request):
+    request['session'] = session
 
 
-class FeedbackForm(wtf.Form):
+class FeedbackForm(SanicForm):
     note = TextField('Note', validators=[DataRequired(), Length(max=40)])
     submit = SubmitField('Submit')
 
 
 @app.route('/', methods=['GET', 'POST'])
 async def index(request):
-    form = FeedbackForm(request.form)
+    form = FeedbackForm(request)
     if request.method == 'POST' and form.validate():
         note = form.note.data
         msg = '{} - {}'.format(datetime.now(), note)
@@ -54,7 +55,7 @@ async def index(request):
 
 @app.route('/fail', methods=['GET', 'POST'])
 async def fail(request):
-    form = FeedbackForm(request.form)
+    form = FeedbackForm(request)
     if request.method == 'POST' and form.validate():
         note = form.note.data
         msg = '{} - {}'.format(datetime.now(), note)

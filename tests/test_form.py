@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
-import pytest
 
-from sanic import Sanic, response
+from sanic import response
 from wtforms.validators import DataRequired, Length
 from wtforms import StringField, SubmitField
 
-from sanic_wtf import SanicWTF, to_bytes
+from sanic_wtf import SanicForm, cached_property, to_bytes
 
 
 # NOTE
@@ -22,19 +21,16 @@ def render_form(form):
     </form>""".format(''.join(str(field) for field in form))
 
 
-def test_form_validation():
-    app = Sanic('test')
-    wtf = SanicWTF(app)
-
+def test_form_validation(app):
     app.config['WTF_CSRF_ENABLED'] = False
 
-    class TestForm(wtf.Form):
+    class TestForm(SanicForm):
         msg = StringField('Note', validators=[DataRequired(), Length(max=10)])
         submit = SubmitField('Submit')
 
     @app.route('/', methods=['GET', 'POST'])
     async def index(request):
-        form = TestForm(request.form)
+        form = TestForm(request)
         if request.method == 'POST' and form.validate():
             return response.text('validated')
         content = render_form(form)
@@ -57,23 +53,16 @@ def test_form_validation():
     assert 'validated' in resp.text
 
 
-def test_form_csrf_validation():
-    app = Sanic('test')
-    wtf = SanicWTF(app)
-
+def test_form_csrf_validation(app):
     app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
 
-    # setup mock up session for testing
-    session = {}
-    wtf.get_csrf_context = lambda _: session
-
-    class TestForm(wtf.Form):
+    class TestForm(SanicForm):
         msg = StringField('Note', validators=[DataRequired(), Length(max=10)])
         submit = SubmitField('Submit')
 
     @app.route('/', methods=['GET', 'POST'])
     async def index(request):
-        form = TestForm(request.form)
+        form = TestForm(request)
         if request.method == 'POST' and form.validate():
             return response.text('validated')
         content = render_form(form)
@@ -97,56 +86,109 @@ def test_form_csrf_validation():
     assert 'validated' not in resp.text
 
 
-def test_uninitialized_form():
-    wtf = SanicWTF()
+def test_secret_key_required(app):
+    assert app.config.get('SECRET_KEY') is None
+    assert app.config.get('WTF_CSRF_SECRET_KEY') is None
 
-    class Form(wtf.Form):
-        pass
+    @app.route('/')
+    async def index(request):
+        form = SanicForm(request)
+        return response.text(form)
 
-    with pytest.raises(NotImplementedError):
-        Form()
-
-
-def test_forbid_init_app_more_than_once():
-    app = Sanic('test')
-    wtf = SanicWTF(app)
-
-    with pytest.raises(RuntimeError):
-        wtf.init_app(app)
-
-    app = Sanic('test')
-    wtf = SanicWTF()
-
-    wtf.init_app(app)
-
-    with pytest.raises(RuntimeError):
-        wtf.init_app(app)
+    req, resp = app.test_client.get('/', debug=True)
+    # the server should render ValueError: no secret key message with 500
+    assert resp.status == 500
+    assert 'ValueError' in resp.text
 
 
-def test_property_hidden_tag():
-    app = Sanic('test')
-    wtf = SanicWTF(app)
-
+def test_property_hidden_tag(app):
     app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
     app.config['WTF_CSRF_FIELD_NAME'] = 'csrf_token'
 
-    # setup mock up session for testing
-    session = {}
-    wtf.get_csrf_context = lambda _: session
-
-    class TestForm(wtf.Form):
+    class TestForm(SanicForm):
         msg = StringField('Note', validators=[DataRequired(), Length(max=10)])
         submit = SubmitField('Submit')
 
     @app.route('/', methods=['GET', 'POST'])
     async def index(request):
-        form = TestForm(request.form)
-        assert form.hidden_tag == form.csrf_token
-        return response.text("")
+        form = TestForm(request)
+        return response.text(form.hidden_tag)
 
-    # trigger the assert statement.
     req, resp = app.test_client.get('/')
     assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+
+def test_no_request_disable_csrf(app):
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_SECRET_KEY'] = 'look ma'
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=10)])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['GET', 'POST'])
+    async def index(request):
+        form = TestForm(formdata=request.form)
+        if request.method == 'POST' and form.validate():
+            return response.text('validated')
+        content = render_form(form)
+        return response.html(content)
+
+    payload = {'msg': 'happy'}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    # should be okay, no request means CSRF was disabled
+    assert 'validated' in resp.text
+
+
+def test_validate_on_submit(app):
+    app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=10)])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['GET', 'POST'])
+    async def index(request):
+        form = TestForm(request)
+        if form.validate_on_submit():
+            return response.text('validated')
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+    payload = {'msg': 'happy', 'csrf_token': token}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'validated' in resp.text
+
+
+def test_cached_property():
+    hit_count = 0
+
+    class A:
+        @cached_property
+        def inc(self):
+            nonlocal hit_count
+            hit_count += 1
+            return hit_count
+
+    a = A()
+    assert hit_count == 0
+    assert a.inc == hit_count == 1
+    # invoke again
+    assert a.inc == hit_count == 1
+    # reset
+    del a.inc
+    assert a.inc == hit_count == 2
 
 
 def test_to_bytes():

@@ -7,7 +7,7 @@ from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 from wtforms.widgets import HiddenInput
 
-__version__ = '0.3.0'
+__version__ = '0.4.0.dev0'
 
 __all__ = ['SanicForm']
 

@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 ROOT_DIR = path.abspath(path.dirname(__file__))
 
-DESCRIPTION = 'Sanic-WTF - WTForms meet Sanic'
+DESCRIPTION = 'Sanic-WTF - Sanic meets WTForms'
 LONG_DESCRIPTION = open(path.join(ROOT_DIR, 'README.rst')).read()
 VERSION = re.search(
     "__version__ = '([^']+)'",

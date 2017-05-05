@@ -5,7 +5,7 @@ from sanic import response
 from wtforms.validators import DataRequired, Length
 from wtforms import StringField, SubmitField
 
-from sanic_wtf import SanicForm, cached_property, to_bytes
+from sanic_wtf import SanicForm, to_bytes
 
 
 # NOTE
@@ -101,7 +101,7 @@ def test_secret_key_required(app):
     assert 'ValueError' in resp.text
 
 
-def test_property_hidden_tag(app):
+def test_csrf_token(app):
     app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
     app.config['WTF_CSRF_FIELD_NAME'] = 'csrf_token'
 
@@ -112,7 +112,7 @@ def test_property_hidden_tag(app):
     @app.route('/', methods=['GET', 'POST'])
     async def index(request):
         form = TestForm(request)
-        return response.text(form.hidden_tag)
+        return response.text(form.csrf_token)
 
     req, resp = app.test_client.get('/')
     assert resp.status == 200
@@ -169,26 +169,6 @@ def test_validate_on_submit(app):
     req, resp = app.test_client.post('/', data=payload)
     assert resp.status == 200
     assert 'validated' in resp.text
-
-
-def test_cached_property():
-    hit_count = 0
-
-    class A:
-        @cached_property
-        def inc(self):
-            nonlocal hit_count
-            hit_count += 1
-            return hit_count
-
-    a = A()
-    assert hit_count == 0
-    assert a.inc == hit_count == 1
-    # invoke again
-    assert a.inc == hit_count == 1
-    # reset
-    del a.inc
-    assert a.inc == hit_count == 2
 
 
 def test_to_bytes():

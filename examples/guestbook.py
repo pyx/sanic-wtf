@@ -42,8 +42,8 @@ async def index(request):
     <p>Try <a href="/fail">form</a> that fails CSRF validation</p>
     {feedback}
     <form action="" method="POST">
-      {'<br>'.join(form.hidden_tag.errors)}
-      {form.hidden_tag()}
+      {'<br>'.join(form.csrf_token.errors)}
+      {form.csrf_token}
       {'<br>'.join(form.note.errors)}
       <br>
       {form.note(size=40, placeholder="say something..")}
@@ -68,7 +68,7 @@ async def fail(request):
     validation always fail because we did not render the hidden csrf token</p>
     {feedback}
     <form action="" method="POST">
-      {'<br>'.join(form.hidden_tag.errors)}
+      {'<br>'.join(form.csrf_token.errors)}
       {'<br>'.join(form.note.errors)}
       <br>
       {form.note(size=40, placeholder="say something..")}

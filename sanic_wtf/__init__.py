@@ -18,21 +18,6 @@ def to_bytes(text, encoding='utf8'):
     return bytes(text)
 
 
-class cached_property:
-    """Readonly properties that will be calcuated only once"""
-    def __init__(self, getter):
-        self.getter = getter
-        self.__doc__ = getter.__doc__
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        else:
-            attr = self.getter(instance)
-            setattr(instance, self.getter.__name__, attr)
-            return attr
-
-
 def meta_for_request(request):
     """Create a meta dict object with settings from request.app"""
     meta = {'csrf': False}
@@ -74,13 +59,6 @@ class SanicForm(Form):
     class Meta(DefaultMeta):
         csrf = True
         csrf_class = SessionCSRF
-
-    @cached_property
-    def hidden_tag(self):
-        """Render hidden input fields of the form"""
-        fields = (str(f) for f in self
-                  if f and isinstance(f.widget, HiddenInput))
-        return '\n'.join(fields)
 
     def __init__(self, request=None, *args, meta=None, **kwargs):
         """"""

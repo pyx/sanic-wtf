@@ -6,7 +6,7 @@ from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 
-__version__ = '0.4.0'
+__version__ = '0.5.0.dev0'
 
 __all__ = ['SanicForm']
 

@@ -55,6 +55,12 @@ Full Example
 Changelog
 =========
 
+- 0.4.0
+
+  **backward incompatible upgrade**
+
+  Removed property hidden_tag
+
 - 0.3.0
 
   **backward incompatible upgrade**

@@ -60,19 +60,17 @@ class SanicForm(Form):
         csrf_class = SessionCSRF
 
     def __init__(self, request=None, *args, meta=None, **kwargs):
-        """"""
         form_meta = meta_for_request(request)
         form_meta.update(meta or {})
         kwargs['meta'] = form_meta
 
         self.request = request
-        if request is None:
-            super().__init__(*args, **kwargs)
-            return
+        if request is not None:
+            formdata = kwargs.pop('formdata', getattr(request, 'form', None))
+            # signature of wtforms.Form (formdata, obj, prefix, ...)
+            args = chain([formdata], args)
 
-        formdata = kwargs.pop('formdata', getattr(request, 'form', None))
-        # signature of wtforms.Form (formdata, obj, prefix, ...)
-        super().__init__(*chain([formdata], args), **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate_on_submit(self):
         """Return `True` if this form is submited and all fields verified"""

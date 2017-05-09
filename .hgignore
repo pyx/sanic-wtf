@@ -15,6 +15,7 @@ tags
 *.old
 *.bak
 *.tmp
+*.log
 .cache
 
 *.orig

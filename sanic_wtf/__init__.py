@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
+from collections import ChainMap
 from datetime import timedelta
 from itertools import chain
 
 from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
+from wtforms.validators import DataRequired, StopValidation
 
 __version__ = '0.5.0.dev0'
 
-__all__ = ['SanicForm']
+__all__ = [
+    'SanicForm',
+    'FileAllowed', 'file_allowed', 'FileRequired', 'file_required',
+]
 
 
 def to_bytes(text, encoding='utf8'):
@@ -45,7 +50,65 @@ def meta_for_request(request):
     return meta
 
 
-SUBMIT_WORDS = frozenset({'DELETE', 'PATCH', 'POST', 'PUT'})
+SUBMIT_VERBS = frozenset({'DELETE', 'PATCH', 'POST', 'PUT'})
+
+
+sentinel = object()
+
+
+class FileRequired(DataRequired):
+    """Validate that the data is a non-empty `sanic.request.File` object"""
+    def __call__(self, form, field):
+        # type sanic.request.File as of v 0.5.4 is:
+        # File = namedtuple('File', ['type', 'body', 'name'])
+        # here, we check whether the name contains anything
+        if not getattr(field.data, 'name', ''):
+            msg = self.message or field.gettext('This field is required.')
+            raise StopValidation(msg)
+
+
+file_required = FileRequired
+
+
+class FileAllowed:
+    """Validate that the file (by extention) is one of the listed types"""
+    def __init__(self, extensions, message=None):
+        extensions = (ext.lower() for ext in extensions)
+        extensions = (
+            ext if ext.startswith('.') else '.' + ext for ext in extensions)
+        self.extensions = frozenset(extensions)
+        self.message = message
+
+    def __call__(self, form, field):
+        filename = getattr(field.data, 'name', '')
+        if not filename:
+            return
+
+        filename = filename.lower()
+        # testing with .endswith instead of the fastest `in` test, because
+        # there may be extensions with more than one dot (.), e.g. ".tar.gz"
+        if any(filename.endswith(ext) for ext in self.extensions):
+            return
+
+        raise StopValidation(self.message or field.gettext(
+            'File type does not allowed.'))
+
+
+file_allowed = FileAllowed
+
+
+class ChainRequestParameters(ChainMap):
+    """ChainMap with sanic.RequestParameters style API"""
+    def get(self, name, default=None):
+        """Return the first element with key `name`"""
+        return super().get(name, [default])[0]
+
+    def getlist(self, name, default=None):
+        """Return all elements with key `name`
+
+        Only elementes of the first chained map with such key are return.
+        """
+        return super().get(name, default)
 
 
 class SanicForm(Form):
@@ -66,7 +129,13 @@ class SanicForm(Form):
 
         self.request = request
         if request is not None:
-            formdata = kwargs.pop('formdata', getattr(request, 'form', None))
+            formdata = kwargs.pop('formdata', sentinel)
+            if formdata is sentinel:
+                if request.files:
+                    formdata = ChainRequestParameters(
+                        request.form, request.files)
+                else:
+                    formdata = request.form
             # signature of wtforms.Form (formdata, obj, prefix, ...)
             args = chain([formdata], args)
 
@@ -75,4 +144,4 @@ class SanicForm(Form):
     def validate_on_submit(self):
         """Return `True` if this form is submited and all fields verified"""
         request = self.request
-        return request and request.method in SUBMIT_WORDS and self.validate()
+        return request and request.method in SUBMIT_VERBS and self.validate()

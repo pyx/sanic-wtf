@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
+import os.path
 
 from sanic import response
 from wtforms.validators import DataRequired, Length
-from wtforms import StringField, SubmitField
+from wtforms import FileField, StringField, SubmitField
 
 from sanic_wtf import SanicForm, to_bytes
 
@@ -14,11 +15,13 @@ from sanic_wtf import SanicForm, to_bytes
 csrf_token_pattern = '''value="([0-9a-f#]{40,})"'''
 
 
-def render_form(form):
+def render_form(form, multipart=False):
+    if multipart is True:
+        multipart = ' enctype="multipart/form-data"'
     return """
-    <form action="" method="POST">
+    <form action="" method="POST"{}>
     {}
-    </form>""".format(''.join(str(field) for field in form))
+    </form>""".format(multipart, ''.join(str(field) for field in form))
 
 
 def test_form_validation(app):
@@ -169,6 +172,27 @@ def test_validate_on_submit(app):
     req, resp = app.test_client.post('/', data=payload)
     assert resp.status == 200
     assert 'validated' in resp.text
+
+
+def test_file_upload(app):
+    app.config['WTF_CSRF_ENABLED'] = False
+
+    class TestForm(SanicForm):
+        upload = FileField('upload file')
+        submit = SubmitField('Upload')
+
+    @app.route('/upload', methods=['GET', 'POST'])
+    async def upload(request):
+        form = TestForm(request)
+        if form.validate_on_submit():
+            return response.text(form.upload.data.name)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.post(
+        '/upload', data={'upload': open(__file__, 'rb')})
+    assert resp.status == 200
+    assert resp.text == os.path.basename(__file__)
 
 
 def test_to_bytes():

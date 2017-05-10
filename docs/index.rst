@@ -65,6 +65,11 @@ File Upload
 Changelog
 =========
 
+- 0.5.0
+
+  Added file upload support and filefield validators :class:`FileAllowed` and
+  :class:`FileRequired`.
+
 - 0.4.0
 
   **backward incompatible upgrade**

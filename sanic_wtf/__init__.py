@@ -8,7 +8,7 @@ from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 from wtforms.validators import DataRequired, StopValidation
 
-__version__ = '0.5.0.dev0'
+__version__ = '0.5.0'
 
 __all__ = [
     'SanicForm',

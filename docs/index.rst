@@ -49,7 +49,17 @@ API
 Full Example
 ============
 
+
+Guest Book
+----------
+
 .. literalinclude:: ../examples/guestbook.py
+
+
+File Upload
+-----------
+
+.. literalinclude:: ../examples/upload.py
 
 
 Changelog

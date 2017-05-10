@@ -18,7 +18,6 @@ help:
 	@echo '  coverage     : analyze test coverage.'
 	@echo '  tox          : run all tests with tox.'
 	@echo '  docs         : generate documentation files.'
-	@echo '  example      : run example.'
 	@echo '  quality      : code quality check.'
 	@echo '  clean        : remove files created by other targets.'
 
@@ -40,10 +39,6 @@ doc-html: test
 .PHONY: doc-pdf
 doc-pdf: test
 	cd $(DOCS_DIR); $(MAKE) latexpdf
-
-.PHONY: example
-example:
-	cd examples; python -m sanic guestbook.app --debug
 
 .PHONY: release
 release: quality tox

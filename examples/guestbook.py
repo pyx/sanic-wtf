@@ -12,8 +12,7 @@ app.config['SECRET_KEY'] = 'top secret !!!'
 # NOTE
 # session should be setup somewhere, SanicWTF expects request['session'] is a
 # dict like session object.
-# For demonstration purpose, we use a mock-up session object by providing our
-# own get_csrf_context
+# For demonstration purpose, we use a mock-up globally-shared session object.
 session = {}
 @app.middleware('request')
 async def add_session(request):

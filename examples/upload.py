@@ -1,9 +1,8 @@
-from datetime import datetime
 from pathlib import Path
 from sanic import Sanic, response
 from sanic_wtf import FileAllowed, FileRequired, SanicForm
-from wtforms import FileField, SubmitField, TextField
-from wtforms.validators import DataRequired, Length
+from wtforms import FileField, SubmitField, StringField
+from wtforms.validators import Length
 
 
 app = Sanic(__name__)
@@ -16,6 +15,8 @@ app.config['UPLOAD_DIR'] = './uploaded.tmp'
 # dict like session object.
 # For demonstration purpose, we use a mock-up globally-shared session object.
 session = {}
+
+
 @app.middleware('request')
 async def add_session(request):
     request['session'] = session
@@ -24,7 +25,7 @@ async def add_session(request):
 class UploadForm(SanicForm):
     image = FileField('Image', validators=[
         FileRequired(), FileAllowed('bmp gif jpg jpeg png'.split())])
-    description = TextField('Description', validators=[Length(max=20)])
+    description = StringField('Description', validators=[Length(max=20)])
     submit = SubmitField('Upload')
 
 

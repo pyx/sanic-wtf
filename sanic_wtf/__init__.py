@@ -115,7 +115,7 @@ class SanicForm(Form):
     """Form with session-based CSRF Protection.
 
     Upon initialization, the form instance will setup CSRF protection with
-    settings fetched from provided Sanic style request objerct.  With no
+    settings fetched from provided Sanic style request object.  With no
     request object provided, CSRF protection will be disabled.
     """
     class Meta(DefaultMeta):

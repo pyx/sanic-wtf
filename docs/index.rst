@@ -37,7 +37,7 @@ API
 
 .. note::
   For users of versions prior to 0.3.0, there is backward incompatible changes
-  in API.  The module-wise helper object is not longer required, the new form
+  in API.  The module-level helper object is not longer required, the new form
   :class:`SanicForm` is smart enough to figure out how to get user defined
   settings.
 

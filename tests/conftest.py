@@ -36,3 +36,18 @@ def async_validator_always_pass():
     async def async_validator(form, field):
         await asyncio.sleep(SLEEP_DURATION)
     return async_validator
+
+@pytest.fixture(scope='function')
+def sync_validator_always_fail():
+    def sync_validator(form, field):
+        raise ValidationError('Should fail')
+    return sync_validator
+
+@pytest.fixture(scope='function')
+def sync_validator_conditionally_fail():
+    def sync_validator(form, field):
+        if form.msg.data == 'fail':
+            raise ValidationError('Invalid')
+        else:
+            pass
+    return sync_validator

@@ -4,6 +4,7 @@ import asyncio
 import warnings
 from wtforms import Form
 from wtforms.validators import StopValidation
+from wtforms.fields.core import Field, FieldList
 
 
 async def _wtforms_form_validate(self):
@@ -59,6 +60,7 @@ async def _field_validate(self, form, extra_validators=()):
 
     # Call pre_validate
     try:
+        # TODO: Should we await this?
         self.pre_validate(form)
     except StopValidation as e:
         if e.args and e.args[0]:
@@ -74,6 +76,7 @@ async def _field_validate(self, form, extra_validators=()):
 
     # Call post_validate
     try:
+        # TODO: Should we await this?
         self.post_validate(form, stop_validation)
     except ValueError as e:
         self.errors.append(e.args[0])
@@ -155,19 +158,21 @@ def _patch(self):
         )
         # 3. 
         for field_name, field in self._fields.items():
-            if hasattr(field, 'validate'):
-                setattr(
-                    self._fields[field_name],
-                    'validate',
-                    types.MethodType(_field_validate, self._fields[field_name])
-                )
-        # 4.
-            if hasattr(field, '_run_validation_chain'):
-                setattr(
-                    self._fields[field_name],
-                    '_run_validation_chain',
-                    types.MethodType(_run_validation_chain_async, self._fields[field_name])
-                )
+            # TODO: Patch FieldList
+            if not isinstance(field, FieldList) and isinstance(field, Field):
+                if hasattr(field, 'validate'):
+                    setattr(
+                        self._fields[field_name],
+                        'validate',
+                        types.MethodType(_field_validate, self._fields[field_name])
+                    )
+            # 4.
+                if hasattr(field, '_run_validation_chain'):
+                    setattr(
+                        self._fields[field_name],
+                        '_run_validation_chain',
+                        types.MethodType(_run_validation_chain_async, self._fields[field_name])
+                    )
         self.patched = True
 
 def patch(f):

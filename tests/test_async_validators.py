@@ -93,23 +93,21 @@ def test_two_async_validators(
     assert resp.status == 200
     assert 'valid' in resp.text
 
-def test_async_with_sync_validators(
+def test_async_with_sync_validators_fail(
     app,
     async_validator_conditionally_fail,
-    async_validator_always_pass
+    async_validator_always_pass,
+    sync_validator_always_fail
 ):
     app.config['WTF_CSRF_ENABLED'] = False
-
-    def sync_validator(form, field):
-        raise ValidationError('Should fail')
 
     class TestForm(SanicForm):
         msg = StringField('Note', validators=[
             DataRequired(),
-            Length(max=2),
+            Length(max=10),
             async_validator_conditionally_fail,
             async_validator_always_pass,
-            sync_validator
+            sync_validator_always_fail
         ])
         submit = SubmitField('Submit')
 
@@ -140,6 +138,51 @@ def test_async_with_sync_validators(
     assert resp.status == 200
     assert 'invalid' in resp.text
 
+def test_async_with_sync_validators_conditionally_fail(
+    app,
+    async_validator_conditionally_fail,
+    async_validator_always_pass,
+    sync_validator_conditionally_fail
+):
+    app.config['WTF_CSRF_ENABLED'] = False
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[
+            DataRequired(),
+            Length(max=10),
+            async_validator_conditionally_fail,
+            async_validator_always_pass,
+            sync_validator_conditionally_fail
+        ])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['POST'])
+    async def index(request):
+        form = TestForm(request)
+        if not await form.validate_on_submit_async():
+            return response.text('invalid')
+        else:
+            return response.text('valid')
+
+    @app.route('/', methods=['GET'])
+    async def index_(request):
+        form = TestForm(request)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+
+    payload = {'msg': 'fail'}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'invalid' in resp.text
+
+    payload = {'msg': 'pass'}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'valid' in resp.text
+
 def test_async_and_sync_stock_validator(
     app,
     async_validator_conditionally_fail,
@@ -150,7 +193,7 @@ def test_async_and_sync_stock_validator(
     class TestForm(SanicForm):
         msg = StringField('Note', validators=[
             DataRequired(),
-            Length(max=1),  # <--
+            Length(max=2),   # <--
             async_validator_conditionally_fail,
             async_validator_always_pass
         ])

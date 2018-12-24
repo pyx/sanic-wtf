@@ -150,11 +150,10 @@ class SanicForm(Form):
                                 Continue using validate_on_submit_async \
                                  instead of validate_on submit')
         """Return `True` if this form is submited and all fields verified"""
-        return (self.request and self.request.method in SUBMIT_VERBS) and \
+        return self.request and (self.request.method in SUBMIT_VERBS) and \
                self.validate()
 
     @patch
     async def validate_on_submit_async(self):
-        """Return `True` if this form is submited and all fields verified"""
-        return (self.request and self.request.method in SUBMIT_VERBS) and \
+        return self.request and (self.request.method in SUBMIT_VERBS) and \
                await self.validate()

@@ -1,5 +1,6 @@
 import types
 import itertools
+import functools
 import asyncio
 import warnings
 from wtforms import Form
@@ -233,7 +234,8 @@ def patch(f):
     3.1.2. wtforms.fields.core.Field._run_validation_chain() --> _run_validation_chain_async
     TODO: 3.2 wtforms.fields.core.FieldList
     '''
-    async def a_wrapper(self, *args, **kwargs):
+    @functools.wraps(f)
+    async def wrapper(self, *args, **kwargs):
         _patch(self)
         return await f(self, *args, **kwargs)
-    return a_wrapper
+    return wrapper

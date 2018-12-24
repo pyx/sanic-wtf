@@ -7,6 +7,9 @@ from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 from wtforms.validators import DataRequired, StopValidation
+from wtforms.fields.core import Field
+
+from ._patch import patch
 
 __version__ = '0.6.0.dev0'
 
@@ -110,7 +113,6 @@ class ChainRequestParameters(ChainMap):
         """
         return super().get(name, default)
 
-
 class SanicForm(Form):
     """Form with session-based CSRF Protection.
 
@@ -123,6 +125,7 @@ class SanicForm(Form):
         csrf_class = SessionCSRF
 
     def __init__(self, request=None, *args, meta=None, **kwargs):
+        self.patched = False
         form_meta = meta_for_request(request)
         form_meta.update(meta or {})
         kwargs['meta'] = form_meta
@@ -143,5 +146,11 @@ class SanicForm(Form):
 
     def validate_on_submit(self):
         """Return `True` if this form is submited and all fields verified"""
-        request = self.request
-        return request and request.method in SUBMIT_VERBS and self.validate()
+        return (self.request and self.request.method in SUBMIT_VERBS) and \
+               self.validate()
+
+    @patch
+    async def validate_on_submit_async(self):
+        """Return `True` if this form is submited and all fields verified"""
+        return (self.request and self.request.method in SUBMIT_VERBS) and \
+               await self.validate()

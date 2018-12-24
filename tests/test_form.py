@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
 import os.path
+import asyncio
 
 from sanic import response
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, ValidationError
 from wtforms import FileField, StringField, SubmitField
 
 from sanic_wtf import SanicForm, to_bytes
@@ -173,6 +174,162 @@ def test_validate_on_submit(app):
     assert resp.status == 200
     assert 'validated' in resp.text
 
+def test_validate_on_submit_async(app):
+    app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
+
+    async def async_validator(form, field):
+        await asyncio.sleep(1)
+        if form.msg.data == 'fail':
+            raise ValidationError('Should fail')
+        else:
+            pass
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=10), async_validator])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['POST'])
+    async def index(request):
+        form = TestForm(request)
+        if not await form.validate_on_submit_async():
+            return response.text('invalid')
+        else:
+            return response.text('valid')
+
+    @app.route('/', methods=['GET'])
+    async def index_(request):
+        form = TestForm(request)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+    payload = {'msg': 'happy', 'csrf_token': token}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'valid' in resp.text
+
+def test_validate_on_submit_async_fails(app):
+    app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
+
+    async def async_validator(form, field):
+        await asyncio.sleep(1)
+        if form.msg.data == 'fail':
+            raise ValidationError('Should fail')
+        else:
+            pass
+
+    async def async_validator_pass(form, field):
+        await asyncio.sleep(1)
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=10), async_validator, async_validator_pass])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['POST'])
+    async def index(request):
+        form = TestForm(request)
+        if not await form.validate_on_submit_async():
+            return response.text('invalid')
+        else:
+            return response.text('valid')
+
+    @app.route('/', methods=['GET'])
+    async def index_(request):
+        form = TestForm(request)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+    payload = {'msg': 'fail', 'csrf_token': token}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'invalid' in resp.text
+
+def test_validate_on_submit_async_and_sync(app):
+    app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
+
+    async def async_validator(form, field):
+        await asyncio.sleep(1)
+
+    def sync_validator(form, field):
+        raise ValidationError('Should fail')
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=10), async_validator, sync_validator])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['POST'])
+    async def index(request):
+        form = TestForm(request)
+        if not await form.validate_on_submit_async():
+            return response.text('invalid')
+        else:
+            return response.text('valid')
+
+    @app.route('/', methods=['GET'])
+    async def index_(request):
+        form = TestForm(request)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+    payload = {'msg': 'fail', 'csrf_token': token}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'invalid' in resp.text
+
+def test_validate_on_submit_async_and_sync_stock_validator(app):
+    app.config['WTF_CSRF_SECRET_KEY'] = 'top secret !!!'
+
+    async def async_validator(form, field):
+        await asyncio.sleep(1)
+
+    def sync_validator(form, field):
+        raise ValidationError('Should fail')
+
+    class TestForm(SanicForm):
+        msg = StringField('Note', validators=[DataRequired(), Length(max=2), async_validator])
+        submit = SubmitField('Submit')
+
+    @app.route('/', methods=['POST'])
+    async def index(request):
+        form = TestForm(request)
+        if not await form.validate_on_submit_async():
+            return response.text('invalid')
+        else:
+            return response.text('valid')
+
+    @app.route('/', methods=['GET'])
+    async def index_(request):
+        form = TestForm(request)
+        content = render_form(form)
+        return response.html(content)
+
+    req, resp = app.test_client.get('/')
+    assert resp.status == 200
+    assert 'csrf_token' in resp.text
+    token = re.findall(csrf_token_pattern, resp.text)[0]
+    assert token
+
+    payload = {'msg': 'fail', 'csrf_token': token}
+    req, resp = app.test_client.post('/', data=payload)
+    assert resp.status == 200
+    assert 'invalid' in resp.text
 
 def test_file_upload(app):
     app.config['WTF_CSRF_ENABLED'] = False

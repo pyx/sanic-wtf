@@ -144,7 +144,9 @@ class SanicForm(Form):
 
         super().__init__(*args, **kwargs)
 
+    # @unpatch ??
     def validate_on_submit(self):
+        ''' for async validators: use self.validate_on_submit_async '''
         if self.patched is not False:
             raise RuntimeError('Once you go async, you can never go back. :)\
                                 Continue using validate_on_submit_async \
@@ -155,5 +157,6 @@ class SanicForm(Form):
 
     @patch
     async def validate_on_submit_async(self):
+        ''' supports async validators '''
         return self.request and (self.request.method in SUBMIT_VERBS) and \
                await self.validate()

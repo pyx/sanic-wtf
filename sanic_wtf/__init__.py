@@ -147,7 +147,7 @@ class SanicForm(Form):
     def validate_on_submit(self):
         if self.patched is not False:
             raise RuntimeError('Once you go async, you can never go back. :)\
-                                Please continue using validate_on_submit_async \
+                                Continue using validate_on_submit_async \
                                  instead of validate_on submit')
         """Return `True` if this form is submited and all fields verified"""
         return (self.request and self.request.method in SUBMIT_VERBS) and \

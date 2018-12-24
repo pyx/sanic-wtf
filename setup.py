@@ -45,6 +45,7 @@ setup(
             'flake8',
             'pytest',
             'pytest-cov',
+            'pytest-asyncio',
             'Sphinx',
             'tox',
             'twine',

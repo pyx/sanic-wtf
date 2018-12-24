@@ -42,6 +42,29 @@ async def _wtforms_base_form_validate(self, extra_validators=None):
             success = False
     return success
 
+async def _field_list_validate(self, form, extra_validators=()):
+    """
+    Validate this FieldList.
+
+    Note that FieldList validation differs from normal field validation in
+    that FieldList validates all its enclosed fields first before running any
+    of its own validators.
+    """
+    self.errors = []
+
+    # Run validators on all entries within
+    for subfield in self.entries:
+        await subfield.validate(form)
+        self.errors.append(subfield.errors)
+
+    if not any(x for x in self.errors):
+        self.errors = []
+
+    chain = itertools.chain(self.validators, extra_validators)
+    self._run_validation_chain(form, chain)
+
+    return len(self.errors) == 0
+
 async def _field_validate(self, form, extra_validators=()):
     """
     Validates the field and returns True or False. `self.errors` will
@@ -60,8 +83,10 @@ async def _field_validate(self, form, extra_validators=()):
 
     # Call pre_validate
     try:
-        # TODO: Should we await this?
-        self.pre_validate(form)
+        if asyncio.iscoroutinefunction(self.pre_validate) is True:
+            await self.pre_validate(form)
+        else:
+            self.pre_validate(form)
     except StopValidation as e:
         if e.args and e.args[0]:
             self.errors.append(e.args[0])
@@ -76,8 +101,10 @@ async def _field_validate(self, form, extra_validators=()):
 
     # Call post_validate
     try:
-        # TODO: Should we await this?
-        self.post_validate(form, stop_validation)
+        if asyncio.iscoroutinefunction(self.post_validate):
+            await self.post_validate(form, stop_validation)
+        else:
+            self.post_validate(form, stop_validation)
     except ValueError as e:
         self.errors.append(e.args[0])
 
@@ -144,47 +171,68 @@ async def _run_validation_chain_async(self, form, validators):
 
 def _patch(self):
     if not self.patched:
-        # 1. 
+        # 1. Patch Form.validate
         setattr(
             self,
             'validate',
             types.MethodType(_wtforms_form_validate, self)
         )
-        # 2. 
+        # 2. Patch BaseForm.validate
+        # NOTE: Form.validate will now call validate_base() instead of calling super().validate()
         setattr(
             self,
             'validate_base',
             types.MethodType(_wtforms_base_form_validate, self)
         )
-        # 3. 
+        # 3. Patch earch field in a form
         for field_name, field in self._fields.items():
-            # TODO: Patch FieldList
+            # 3.1 Patch field type
             if not isinstance(field, FieldList) and isinstance(field, Field):
+                # 3.1.1 Patch field.validate
                 if hasattr(field, 'validate'):
                     setattr(
                         self._fields[field_name],
                         'validate',
-                        types.MethodType(_field_validate, self._fields[field_name])
+                        types.MethodType(
+                            # Else, Attach this method
+                            _field_validate,
+                            self._fields[field_name]
+                        )
                     )
-            # 4.
+                # 3.1.2 Patch field._run_validation_chain
                 if hasattr(field, '_run_validation_chain'):
                     setattr(
                         self._fields[field_name],
                         '_run_validation_chain',
                         types.MethodType(_run_validation_chain_async, self._fields[field_name])
                     )
+            # # 3.2 Patch fieldlist type
+            # # Have to deal with entries (sub-fields)
+            # # Won't work asynchronously until this is fixed
+            # elif isinstance(field, FieldList) and isinstance(field, Field):
+            #     if hasattr(field, 'validate'):
+            #         setattr(
+            #             self._fields[field_name],
+            #             'validate',
+            #             types.MethodType(
+            #                 # Attach this method if pre or post validator is a coroutine
+            #                 _field_list_validate,
+            #                 self._fields[field_name]
+            #             )
+            #         )
         self.patched = True
 
 def patch(f):
     ''' Patch fields to make them support async validators
     Patches:
 
-    1. wtform.Form.validate() --> _wtforms_form_validate
-    2. wtform.BaseForm.validate() --> _wtforms_base_form_validate
-    3. wtform.fields.core.Field.validate() --> _field_validate
-    4. wtform.fields.core.Field._run_validation_chain() --> _run_validation_chain_async
-    
-     '''
+    1. wtforms.Form.validate() --> _wtforms_form_validate
+    2. wtforms.BaseForm.validate() --> _wtforms_base_form_validate
+    3.1 wtforms.fields.core.Field
+    3.1.1. wtforms.fields.core.Field.validate() --> _field_validate
+    3.1.2. wtforms.fields.core.Field._run_validation_chain() --> _run_validation_chain_async
+    TODO: 3.2 wtforms.fields.core.FieldList
+    '''
     async def a_wrapper(self, *args, **kwargs):
         _patch(self)
         return await f(self, *args, **kwargs)

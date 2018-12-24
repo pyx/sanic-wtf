@@ -1,6 +1,3 @@
-
-
-
 # NOTE
 # taking shortcut here, assuming there will be only one "string" (the token)
 # ever longer than 40.

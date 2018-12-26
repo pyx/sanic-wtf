@@ -69,9 +69,9 @@ class RecaptchaField(Field):
 
     .. note::
 
-    Don't pass this field your configs. Instead set it to your app's configs.
+        Don't pass this field your configs. Instead set it to your app's configs.
 
-    Then when instantiating your sanic form for rendering, pass it your request object
+        Then when instantiating your sanic form for rendering, pass it your request object
 
     Configs to set:
 

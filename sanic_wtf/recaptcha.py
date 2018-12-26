@@ -201,9 +201,9 @@ class RecaptchaField(Field):
 
     widget = recaptcha_widget
             
-    def __init__(self, label='', validators=None, config_prifex=None, **kwargs):
+    def __init__(self, label='', validators=None, config_prefix=None, **kwargs):
         validators = validators or [recaptcha_validator]
-        self._config_prefix = config_prifex or 'RECAPTCHA'
+        self._config_prefix = config_prefix or 'RECAPTCHA'
         super(RecaptchaField, self).__init__(label, validators, **kwargs)
 
     def _get_app(self, app):

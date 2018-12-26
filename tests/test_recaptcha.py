@@ -120,3 +120,16 @@ async def test_validator_is_called_2():
     res = await testf.validate_on_submit_async()
 
     assert 'The response parameter is missing.' in str(testf.errors)
+
+@pytest.mark.asyncio
+async def test_config_prefix():
+    class TestForm(SanicForm):
+        recapfield = RecaptchaField('recapt', config_prefix='RECAPTCHA_V2')
+
+    test_req = get_req_with_config(
+        {'RECAPTCHA_V2_PUBLIC_KEY': 'pubkey', 'RECAPTCHA_V2_PRIVATE_KEY': 'privkey', 'TESTING': False}
+    )
+    testf = TestForm(test_req)
+    testf.request.form['g-recaptcha-response'] = 'must exist'
+
+    assert 'pubkey' in testf._fields.get('recapfield')()

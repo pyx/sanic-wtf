@@ -158,7 +158,7 @@ class SanicForm(Form):
     # @unpatch ??
     def validate_on_submit(self):
         ''' For async validators: use self.validate_on_submit_async.
-            This method is still here for backward compatibility
+            This method is only still here for backward compatibility
         '''
         if self.patched is not False:
             raise RuntimeError('Once you go async, you can never go back. :)\
@@ -170,6 +170,15 @@ class SanicForm(Form):
 
     @patch
     async def validate_on_submit_async(self):
-        ''' supports async validators and Sanic-WTF Recaptcha '''
+        ''' supports async validators and Sanic-WTF Recaptcha 
+        
+        .. note::
+        
+            As a side effect of patching wtforms to support async, 
+            there's a restriction you must be aware of: 
+            Don't use SanifForm.validate_on_submit() after running this method.
+            Doing so will most likely cause an error.
+
+            '''
         return self.request and (self.request.method in SUBMIT_VERBS) and \
                await self.validate()

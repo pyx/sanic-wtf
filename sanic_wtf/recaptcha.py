@@ -8,7 +8,7 @@ __all__ = ['RecaptchaField']
 async def recaptcha_validator(form, field):
     # Skip if testing
     if hasattr(form, 'request'):
-        if  'TESTING' in form.request.app.config:
+        if 'TESTING' in form.request.app.config:
             if form.request.app.config['TESTING'] is True:
                 return
 
@@ -54,7 +54,11 @@ class RecaptchaField(Field):
     '''
     Recaptcha field
 
-    Arguments:
+    Don't pass this field your configs. Instead set it to your app's configs.
+
+    Then when instantiating your sanic form for rendering, pass it your request object
+
+    Configs to set:
 
         Request with an App that has the following configs:
 

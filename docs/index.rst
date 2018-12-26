@@ -15,6 +15,9 @@ to try `Sanic-CookieSession`_.
 Configuration
 =============
 
+CSRF Configs
+---------------
+
 ================================ =============================================
 Option                           Description
 ================================ =============================================
@@ -30,6 +33,130 @@ Option                           Description
 :code:`WTF_CSRF_TIME_LIMIT`      How long CSRF tokens are valid for, in seconds.
                                  Default is `1800`. (Half an hour)
 ================================ =============================================
+
+Recaptcha Configs
+------------------
+
+RECAPTCHA_PUBLICKEY:
+
+  * Required
+
+  * Your Sitekey
+
+RECAPTCHA_SECRETKEY:
+
+  * Required
+
+RECAPTCHA_ONLOAD (str):
+
+  * Optional
+
+  * The name of your callback function to be executed once all the dependencies have loaded.
+
+RECAPTCHA_RENDER (str):
+
+  * Optional
+  
+  * Whether to render the widget explicitly. 
+  
+  * Defaults to onload, which will render the widget in the first g-recaptcha tag it finds.
+
+  * One of: ``("explicit", "onload")``
+
+RECAPTCHA_LANGUAGE (str):
+
+  * Optional
+
+  * hl language code
+
+  * Reference: https://developers.google.com/recaptcha/docs/language
+
+RECAPTCHA_ASYNC (bool):
+
+  * Optional
+
+  * add async tag to JS script
+
+  * Default True
+
+RECAPTCHA_DEFER (bool):
+
+  * Optional
+
+  * Add def tag to JS Script
+
+  * Default True
+
+RECAPTCHA_THEME:
+
+  * The color theme of the widget.
+
+  * Optional
+
+  * One of: (dark, light)
+
+  * Default: light
+
+RECAPTCHA_BADGE:
+
+  * Reposition the reCAPTCHA badge. 'inline' lets you position it with CSS.
+
+  * Optional
+
+  * One of: ('bottomright', 'bottomleft', 'inline')
+
+  * Default: None
+
+RECAPTCHA_SIZE:
+
+  * Optional
+
+  * The size of the widget
+
+  * One of: ("compact", "normal", "invisible")
+
+  * Default: 'normal'
+
+RECAPTCHA_TYPE:
+
+  * Optional
+
+  * One of: ('image', 'audio')
+
+  * Default: 'image'
+
+RECAPTCHA_TABINDEX (int):
+
+  * Optional
+
+  * The tabindex of the widget and challenge. 
+  
+  * If other elements in your page use tabindex, it should be set to make user navigation easier.
+
+  * Default: 0
+
+RECAPTCHA_CALLBACK (str):
+
+  * Optional
+
+  * The name of your callback function, executed when the user submits a successful response.
+
+  * The **g-recaptcha-response** token is passed to your callback.
+
+RECAPTCHA_EXPIRED_CALLBACK (str):
+
+  * Opional
+
+  * The name of your callback function, executed when the reCAPTCHA response expires and the user needs to re-verify.
+
+RECAPTCHA_ERROR_CALLBACK (str):
+
+  * Optional
+
+  * The name of your callback function, executed when reCAPTCHA encounters an error 
+  (usually network connectivity) and cannot continue until connectivity is restored.
+
+  * If you specify a function here, you are responsible for informing the user that they should retry.
 
 
 API

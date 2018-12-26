@@ -89,6 +89,7 @@ def test_secret_key_required(app):
     # the server should render ValueError: no secret key message with 500
     assert resp.status == 500
     assert 'ValueError' in resp.text
+    assert 'CSRF protection needs either WTF_CSRF_SECRET_KEY or SECRET_KEY' in resp.text
 
 
 def test_csrf_token(app):

@@ -10,12 +10,13 @@ from wtforms.validators import DataRequired, StopValidation
 from wtforms.fields.core import Field
 
 from ._patch import patch
+from .recaptcha import RecaptchaField
 
-__version__ = '0.6.0.dev0'
+__version__ = '0.7.0.dev0'
 
 __all__ = [
     'SanicForm',
-    'FileAllowed', 'file_allowed', 'FileRequired', 'file_required',
+    'FileAllowed', 'file_allowed', 'FileRequired', 'file_required', 'RecaptchaField'
 ]
 
 
@@ -125,11 +126,15 @@ class SanicForm(Form):
         csrf_class = SessionCSRF
 
     def __init__(self, request=None, *args, meta=None, **kwargs):
+        # Patching status
         self.patched = False
+
+        # Meta
         form_meta = meta_for_request(request)
         form_meta.update(meta or {})
         kwargs['meta'] = form_meta
 
+        # Formdata
         self.request = request
         if request is not None:
             formdata = kwargs.pop('formdata', sentinel)
@@ -144,9 +149,17 @@ class SanicForm(Form):
 
         super().__init__(*args, **kwargs)
 
+        # Pass app to fields that need it 
+        if self.request is not None:
+            for name, field in self._fields.items():
+                if hasattr(field, '_get_app'):
+                    field._get_app(self.request.app)
+
     # @unpatch ??
     def validate_on_submit(self):
-        ''' for async validators: use self.validate_on_submit_async '''
+        ''' For async validators: use self.validate_on_submit_async.
+            This method is still here for backward compatibility
+        '''
         if self.patched is not False:
             raise RuntimeError('Once you go async, you can never go back. :)\
                                 Continue using validate_on_submit_async \
@@ -157,6 +170,6 @@ class SanicForm(Form):
 
     @patch
     async def validate_on_submit_async(self):
-        ''' supports async validators '''
+        ''' supports async validators and Sanic-WTF Recaptcha '''
         return self.request and (self.request.method in SUBMIT_VERBS) and \
                await self.validate()

@@ -48,7 +48,7 @@ Defining Forms
 
 .. code-block:: python
 
-  from sanic_wtf import SanicForm
+  from sanic_wtf import SanicForm, RecaptchaField
   from wtforms import PasswordField, StringField, SubmitField
   from wtforms.validators import DataRequired
 
@@ -56,6 +56,7 @@ Defining Forms
       name = StringField('Name', validators=[DataRequired()])
       password = PasswordField('Password', validators=[DataRequired()])
       submit = SubmitField('Sign In')
+      recaptcha = RecaptchaField('recaptcha')
 
 That's it, just subclass `SanicForm` and later on passing in the current
 `request` object when you instantiate the form class.  Sanic-WTF will do the
@@ -72,7 +73,8 @@ Form Validation
   @app.route('/', methods=['GET', 'POST'])
   async def index(request):
       form = LoginForm(request)
-      if request.method == 'POST' and form.validate():
+      if request.method == 'POST' and \ 
+         await form.validate_on_submit_async():
           name = form.name.data
           password = form.password.data
           # check user password, log in user, etc.

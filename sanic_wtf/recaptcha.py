@@ -77,13 +77,13 @@ class RecaptchaField(Field):
 
         Request with an App that has the following configs:
 
-            RECAPTCHA_PUBLICKEY:
+            RECAPTCHA_PUBLIC_KEY:
 
                 * Required
 
                 * Your Sitekey
 
-            RECAPTCHA_SECRETKEY:
+            RECAPTCHA_PRIVATE_KEY:
 
                 * Required
 

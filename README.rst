@@ -52,6 +52,9 @@ Defining Forms
   from wtforms import PasswordField, StringField, SubmitField
   from wtforms.validators import DataRequired
 
+  app.config.RECAPTCHA_PUBLIC_KEY = ''
+  app.config.RECAPTCHA_PRIVATE_KEY = ''
+
   class LoginForm(SanicForm):
       name = StringField('Name', validators=[DataRequired()])
       password = PasswordField('Password', validators=[DataRequired()])

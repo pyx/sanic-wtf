@@ -37,13 +37,13 @@ Option                           Description
 Recaptcha Configs
 ------------------
 
-RECAPTCHA_PUBLICKEY:
+RECAPTCHA_PUBLIC_KEY:
 
   * Required
 
   * Your Sitekey
 
-RECAPTCHA_SECRETKEY:
+RECAPTCHA_PRIVATE_KEY:
 
   * Required
 

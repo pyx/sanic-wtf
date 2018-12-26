@@ -22,7 +22,7 @@ async def recaptcha_validator(form, field):
     # Verify
     try:
         await aiorecaptcha.verify(
-            secret=form.request.app.config['RECAPTCHA_PRIVATE_KEY'],
+            secret=form.request.app.config[field._config_prefix + '_PRIVATE_KEY'],
             response=response,
             remoteip=ip
         )
@@ -31,22 +31,22 @@ async def recaptcha_validator(form, field):
 
 def recaptcha_widget(self, field, error=None, **kwargs):
     html = aiorecaptcha.html(
-        site_key=field._config.get('RECAPTCHA_PUBLIC_KEY'),
-        theme=field._config.get('RECAPTCHA_THEME'),
-        badge=field._config.get('RECAPTCHA_BADGE'),
-        size=field._config.get('RECAPTCHA_SIZE'),
-        type_=field._config.get('RECAPTCHA_TYPE'),
-        tabindex=field._config.get('RECAPTCHA_TABINDEX'),
-        callback=field._config.get('RECAPTCHA_CALLBACK'),
-        expired_callback=field._config.get('RECAPTCHA_EXPIRED_CALLBACK'),
-        error_callback=field._config.get('RECAPTCHA_ERROR_CALLBACK')
+        site_key=field._config.get(self._config_prefix + '_PUBLIC_KEY'),
+        theme=field._config.get(self._config_prefix + '_THEME'),
+        badge=field._config.get(self._config_prefix + '_BADGE'),
+        size=field._config.get(self._config_prefix + '_SIZE'),
+        type_=field._config.get(self._config_prefix + '_TYPE'),
+        tabindex=field._config.get(self._config_prefix + '_TABINDEX'),
+        callback=field._config.get(self._config_prefix + '_CALLBACK'),
+        expired_callback=field._config.get(self._config_prefix + '_EXPIRED_CALLBACK'),
+        error_callback=field._config.get(self._config_prefix + '_ERROR_CALLBACK')
     )
     js = aiorecaptcha.js(
-        onload=field._config.get('RECAPTCHA_ONLOAD'),
-        render=field._config.get('RECAPTCHA_RENDER'),
-        language=field._config.get('RECAPTCHA_LANGUAGE'),
-        async_=field._config.get('RECAPTCHA_ASYNC'),
-        defer=field._config.get('RECAPTCHA_DEFER'),
+        onload=field._config.get(self._config_prefix + '_ONLOAD'),
+        render=field._config.get(self._config_prefix + '_RENDER'),
+        language=field._config.get(self._config_prefix + '_LANGUAGE'),
+        async_=field._config.get(self._config_prefix + '_ASYNC'),
+        defer=field._config.get(self._config_prefix + '_DEFER'),
     )
     return js + '\n' + html
 
@@ -186,8 +186,9 @@ class RecaptchaField(Field):
 
     widget = recaptcha_widget
             
-    def __init__(self, label='', validators=None, **kwargs):
+    def __init__(self, label='', validators=None, config_prefex=None, **kwargs):
         validators = validators or [recaptcha_validator]
+        self._config_prefix = config_prefex or 'RECAPTCHA'
         super(RecaptchaField, self).__init__(label, validators, **kwargs)
 
     def _get_app(self, app):

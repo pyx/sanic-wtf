@@ -52,7 +52,22 @@ def recaptcha_widget(self, field, error=None, **kwargs):
 
 class RecaptchaField(Field):
     '''
-    Recaptcha field
+
+    Async Recaptcha Field
+    
+    Arguments:
+
+        label (int): Field's label
+
+        validators (list, tuple): Leave it as None. Overriding this will replace the stock validator
+
+        config_prefix (str): 
+        
+            * Default: 'RECAPTCHA'. 
+        
+            * Change this if you want to use many types of Recaptchas in your app e.g. RECAPTCHA_V2 and RECAPTCHA_V3
+
+    .. note::
 
     Don't pass this field your configs. Instead set it to your app's configs.
 

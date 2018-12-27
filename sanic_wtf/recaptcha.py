@@ -1,6 +1,7 @@
 from wtforms.fields import Field
 from wtforms import ValidationError
 import aiorecaptcha
+from markupsafe import Markup
 
 
 __all__ = ['RecaptchaField']
@@ -48,7 +49,7 @@ def recaptcha_widget(self, field, error=None, **kwargs):
         async_=field._config.get(self._config_prefix + '_ASYNC'),
         defer=field._config.get(self._config_prefix + '_DEFER'),
     )
-    return js + '\n' + html
+    return Markup(js) + Markup(html)
 
 class RecaptchaField(Field):
     '''

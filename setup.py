@@ -38,7 +38,8 @@ setup(
     install_requires=[
         'sanic',
         'wtforms',
-        'aio-recaptcha'
+        'aio-recaptcha',
+        'markupsafe'
     ],
     extras_require={
         'dev': [

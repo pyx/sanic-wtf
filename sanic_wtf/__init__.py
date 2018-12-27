@@ -179,6 +179,6 @@ class SanicForm(Form):
             Don't use SanifForm.validate_on_submit() after running this method.
             Doing so will most likely cause an error.
 
-            '''
+        '''
         return self.request and (self.request.method in SUBMIT_VERBS) and \
                await self.validate()

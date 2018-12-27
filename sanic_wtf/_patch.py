@@ -45,29 +45,6 @@ async def _wtforms_base_form_validate(self, extra_validators=None):
             success = False
     return success
 
-async def _field_list_validate(self, form, extra_validators=()):
-    """
-    Validate this FieldList.
-
-    Note that FieldList validation differs from normal field validation in
-    that FieldList validates all its enclosed fields first before running any
-    of its own validators.
-    """
-    self.errors = []
-
-    # Run validators on all entries within
-    for subfield in self.entries:
-        # Added an await here
-        await subfield.validate(form)
-        self.errors.append(subfield.errors)
-
-    if not any(x for x in self.errors):
-        self.errors = []
-
-    chain = itertools.chain(self.validators, extra_validators)
-    self._run_validation_chain(form, chain)
-
-    return len(self.errors) == 0
 
 async def _field_validate(self, form, extra_validators=()):
     """
@@ -214,19 +191,7 @@ def _patch(self):
                         types.MethodType(_run_validation_chain_async, self._fields[field_name])
                     )
             # # 3.2 Patch fieldlist type
-            # # Have to deal with entries (sub-fields)
-            # # Won't work asynchronously until this is fixed
-            # elif isinstance(field, FieldList) and isinstance(field, Field):
-            #     if hasattr(field, 'validate'):
-            #         setattr(
-            #             self._fields[field_name],
-            #             'validate',
-            #             types.MethodType(
-            #                 # Attach this method if pre or post validator is a coroutine
-            #                 _field_list_validate,
-            #                 self._fields[field_name]
-            #             )
-            #         )
+            # # Won't work asynchronously until "entries" (subfields) are dealt with
         self.patched = True
 
 def patch(f):

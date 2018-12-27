@@ -61,7 +61,7 @@ RECAPTCHA_RENDER (str):
   
   * Defaults to onload, which will render the widget in the first g-recaptcha tag it finds.
 
-  * One of: ``("explicit", "onload")``
+  * Either: ``"onload"`` or explicitly specify a widget value
 
 RECAPTCHA_LANGUAGE (str):
 
@@ -157,6 +157,12 @@ RECAPTCHA_ERROR_CALLBACK (str):
   (usually network connectivity) and cannot continue until connectivity is restored.
 
   * If you specify a function here, you are responsible for informing the user that they should retry.
+
+RECAPTCHA_JS_ONLY (bool):
+
+  * Default False
+
+  * You might need this if you only want to use Recaptcha's JS script (Recaptcha V3)
 
 
 API

@@ -31,6 +31,15 @@ async def recaptcha_validator(form, field):
         raise ValidationError(e)
 
 def recaptcha_widget(self, field, error=None, **kwargs):
+    js = aiorecaptcha.js(
+        onload=field._config.get(self._config_prefix + '_ONLOAD'),
+        render=field._config.get(self._config_prefix + '_RENDER'),
+        language=field._config.get(self._config_prefix + '_LANGUAGE'),
+        async_=field._config.get(self._config_prefix + '_ASYNC'),
+        defer=field._config.get(self._config_prefix + '_DEFER'),
+    )
+    if field._config.get(self._config_prefix + '_JS_ONLY') is True:
+        return Markup(js)
     html = aiorecaptcha.html(
         site_key=field._config.get(self._config_prefix + '_PUBLIC_KEY'),
         theme=field._config.get(self._config_prefix + '_THEME'),
@@ -41,13 +50,6 @@ def recaptcha_widget(self, field, error=None, **kwargs):
         callback=field._config.get(self._config_prefix + '_CALLBACK'),
         expired_callback=field._config.get(self._config_prefix + '_EXPIRED_CALLBACK'),
         error_callback=field._config.get(self._config_prefix + '_ERROR_CALLBACK')
-    )
-    js = aiorecaptcha.js(
-        onload=field._config.get(self._config_prefix + '_ONLOAD'),
-        render=field._config.get(self._config_prefix + '_RENDER'),
-        language=field._config.get(self._config_prefix + '_LANGUAGE'),
-        async_=field._config.get(self._config_prefix + '_ASYNC'),
-        defer=field._config.get(self._config_prefix + '_DEFER'),
     )
     return Markup(js) + Markup(html)
 
@@ -102,7 +104,7 @@ class RecaptchaField(Field):
                 
                 * Defaults to onload, which will render the widget in the first g-recaptcha tag it finds.
 
-                * One of: ``("explicit", "onload")``
+                * Either: ``"onload"`` or explicitly specify a widget value
 
             RECAPTCHA_LANGUAGE (str):
 
@@ -198,11 +200,17 @@ class RecaptchaField(Field):
                 (usually network connectivity) and cannot continue until connectivity is restored.
 
                 * If you specify a function here, you are responsible for informing the user that they should retry.
+
+            RECAPTCHA_JS_ONLY (bool):
+
+                * Default False
+
+                * You might need this if you only want to use Recaptcha's JS script (Recaptcha V3)
     '''
 
     widget = recaptcha_widget
             
-    def __init__(self, label='', validators=None, **kwargs):
+    def __init__(self, label='Recaptcha', validators=None, **kwargs):
         validators = validators or [recaptcha_validator]
         self._config_prefix = kwargs.pop('config_prefix', None) or 'RECAPTCHA'
         super(RecaptchaField, self).__init__(label, validators, **kwargs)

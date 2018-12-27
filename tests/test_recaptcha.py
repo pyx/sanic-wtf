@@ -133,3 +133,22 @@ async def test_config_prefix():
     testf.request.form['g-recaptcha-response'] = 'must exist'
 
     assert 'pubkey' in testf._fields.get('recapfield')()
+
+@pytest.mark.asyncio
+async def test_js_only():
+    class TestForm(SanicForm):
+        recapfield = RecaptchaField('recapt')
+
+    test_req = get_req_with_config(
+        {'RECAPTCHA_PUBLIC_KEY': 'pubkey', 'RECAPTCHA_PRIVATE_KEY': 'privkey', 'TESTING': False, 'RECAPTCHA_JS_ONLY': True}
+    )
+    testf = TestForm(test_req)
+    testf.request.form['g-recaptcha-response'] = 'must exist'
+    assert '<div' not in testf._fields.get('recapfield')()
+
+    test_req = get_req_with_config(
+        {'RECAPTCHA_PUBLIC_KEY': 'pubkey', 'RECAPTCHA_PRIVATE_KEY': 'privkey', 'TESTING': False, 'RECAPTCHA_JS_ONLY': False}
+    )
+    testf = TestForm(test_req)
+    testf.request.form['g-recaptcha-response'] = 'must exist'
+    assert '<div' in testf._fields.get('recapfield')()

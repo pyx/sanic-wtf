@@ -101,57 +101,21 @@ async def _run_validation_chain_async(self, form, validators):
     :param validators: a sequence or iterable of validator callables.
     :return: True if validation was stopped, False otherwise.
     """
-    async def async_validate(validator):
-        try:
-            await validator(form, self)
-        except StopValidation as e:
-            if e.args and e.args[0]:
-                self.errors.append(e.args[0])
-            raise e
-        except ValueError as e:  # Catches validation errors
-            self.errors.append(e.args[0])
-
-    # Sort validators
-    sync_validators = []
-    async_validators = []
 
     for validator in validators:
-        # Wrap async validators
-        # If wrap in a future to execute concurrently
-        if asyncio.iscoroutinefunction(validator):
-            async_validators.append(
-                asyncio.ensure_future(
-                    async_validate(
-                        validator
-                    )
-                )
-            )
-        # Wrap sync validators
-        # Else add to sync validators
-        else:
-            sync_validators.append(
-                validator
-            )
-
-    # Run async validators
-    if async_validators:
+        # If async 
         try:
-            await asyncio.gather(*async_validators)
-        except StopValidation:
-            return True
-
-    # Run sync validators
-    for validator in sync_validators:
-        try:
-            validator(form, self)
+            if asyncio.iscoroutinefunction(validator):
+                await validator(form, self)
+            else:
+                validator(form, self)
         except StopValidation as e:
             if e.args and e.args[0]:
                 self.errors.append(e.args[0])
             return True
         except ValueError as e:  # Catches validation errors
             self.errors.append(e.args[0])
-
-    return False
+    return False    
 
 def _patch(self):
     if not self.patched:

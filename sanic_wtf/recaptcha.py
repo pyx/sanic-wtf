@@ -220,7 +220,7 @@ class RecaptchaField(Field):
         if isinstance(extra_validators, (list, set, tuple)):
             validators.update(extra_validators)
         self._config_prefix = kwargs.pop('config_prefix', None) or 'RECAPTCHA'
-        super(RecaptchaField, self).__init__(label, validators, **kwargs)
+        super(RecaptchaField, self).__init__(label, list(validators), **kwargs)
 
     def _get_app(self, app):
         self._config = app.config

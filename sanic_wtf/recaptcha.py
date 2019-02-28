@@ -37,7 +37,7 @@ async def recaptcha_validator(form, field):
             remoteip=ip
         )
     except aiorecaptcha.RecaptchaError as e:
-        raise ValidationError(e)
+        raise ValidationError(e.msg)
 
 def recaptcha_widget(self, field, error=None, **kwargs):
     js = aiorecaptcha.js(

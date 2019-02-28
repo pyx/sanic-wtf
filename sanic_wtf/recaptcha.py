@@ -16,11 +16,15 @@ async def recaptcha_validator(form, field):
 
     # Get captcha response from request
     try:
-        response = form.request.form.get('g-recaptcha-response') or \
-                    form.request.json.get('g-recaptcha-response')
+        form_resp = form.request.form.get('g-recaptcha-response')
     except InvalidUsage:
-        response = None
-
+        form_resp = None
+    try:
+        json_resp = form.request.json.get('g-recaptcha-response')
+    except InvalidUsage:
+        json_resp = None
+    response = form_resp or json_resp
+ 
     if response is None:
         raise ValidationError('The response parameter is missing.')
     ip = getattr(form.request, 'ip', None)

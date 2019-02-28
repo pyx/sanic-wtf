@@ -119,7 +119,7 @@ async def test_validator_is_called_not_mocked():
 
     res = await testf.validate_on_submit_async()
 
-    assert 'The response parameter is missing.' in str(testf.errors)
+    assert 'The response parameter is invalid or malformed.' in str(testf.errors['recapfield'])
 
 @pytest.mark.asyncio
 async def test_config_prefix():

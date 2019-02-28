@@ -2,6 +2,7 @@ from wtforms.fields import Field
 from wtforms import ValidationError
 import aiorecaptcha
 from markupsafe import Markup
+from sanic.exceptions import InvalidUsage
 
 
 __all__ = ['RecaptchaField']
@@ -14,8 +15,12 @@ async def recaptcha_validator(form, field):
                 return
 
     # Get captcha response from request
-    response = form.request.form.get('g-recaptcha-response') or \
-                form.request.json.get('g-recaptcha-response')
+    try:
+        response = form.request.form.get('g-recaptcha-response') or \
+                    form.request.json.get('g-recaptcha-response')
+    except InvalidUsage:
+        response = None
+
     if response is None:
         raise ValidationError('The response parameter is missing.')
     ip = getattr(form.request, 'ip', None)
@@ -210,8 +215,10 @@ class RecaptchaField(Field):
 
     widget = recaptcha_widget
             
-    def __init__(self, label='Recaptcha', validators=None, **kwargs):
-        validators = validators or [recaptcha_validator]
+    def __init__(self, label='Recaptcha', extra_validators: list=None, **kwargs):
+        validators = set([recaptcha_validator])
+        if isinstance(extra_validators, (list, set, tuple)):
+            validators.update(extra_validators)
         self._config_prefix = kwargs.pop('config_prefix', None) or 'RECAPTCHA'
         super(RecaptchaField, self).__init__(label, validators, **kwargs)
 

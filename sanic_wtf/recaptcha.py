@@ -1,38 +1,45 @@
+from typing import Union
+
+from sanic.exceptions import InvalidUsage
+
 from wtforms.fields import Field
 from wtforms import ValidationError
+
 import aiorecaptcha
 from markupsafe import Markup
-from sanic.exceptions import InvalidUsage
 
 
 __all__ = ['RecaptchaField']
 
 async def recaptcha_validator(form, field):
+    request = form.request
+    app = request.app
+    config = app.config
+
     # Skip if testing
     if hasattr(form, 'request'):
-        testing = form.request.app.config.get('TESTING')
+        testing = config.get('TESTING')
         if testing is True:
             return
-
     # Get captcha response from request
     try:
-        response = form.request.form.get('g-recaptcha-response')
+        response = request.form.get('g-recaptcha-response')
     except InvalidUsage:
         response = None
     if not response:
         try:
-            response = form.request.json.get('g-recaptcha-response')
+            response = request.json.get('g-recaptcha-response')
         except InvalidUsage:
             pass
 
     if response is None:
         raise ValidationError('The response parameter is missing.')
-    ip = getattr(form.request, 'ip', None)
+    ip = getattr(request, 'ip', None)
 
     # Verify
     try:
         await aiorecaptcha.verify(
-            secret=form.request.app.config[field._config_prefix + '_PRIVATE_KEY'],
+            secret=config[field._config_prefix + '_PRIVATE_KEY'],
             response=response,
             remoteip=ip
         )
@@ -221,7 +228,7 @@ class RecaptchaField(Field):
 
     widget = recaptcha_widget
             
-    def __init__(self, label='Recaptcha', extra_validators: list=None, **kwargs):
+    def __init__(self, label='Recaptcha', extra_validators: Union[list, tuple, set]=None, **kwargs):
         validators = set([recaptcha_validator])
         if isinstance(extra_validators, (list, set, tuple)):
             validators.update(extra_validators)

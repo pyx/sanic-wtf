@@ -69,10 +69,6 @@ async def _field_validate(self, form, extra_validators=()):
         res = self.pre_validate(form)
         if inspect.isawaitable(res):
             res = await(res)
-        #if asyncio.iscoroutinefunction(self.pre_validate) is True:
-        #    await self.pre_validate(form)
-        #else:
-        #    self.pre_validate(form)
     except StopValidation as e:
         if e.args and e.args[0]:
             self.errors.append(e.args[0])
@@ -91,10 +87,6 @@ async def _field_validate(self, form, extra_validators=()):
         res = self.post_validate(form, stop_validation)
         if inspect.isawaitable(res):
             await res
-        #if asyncio.iscoroutinefunction(self.post_validate):
-        #    await self.post_validate(form, stop_validation)
-        #else:
-        #    self.post_validate(form, stop_validation)
     except ValueError as e:
         self.errors.append(e.args[0])
 
@@ -115,10 +107,6 @@ async def _run_validation_chain_async(self, form, validators):
             res = validator(form, self)
             if inspect.isawaitable(res):
                 await res
-            # if asyncio.iscoroutinefunction(validator):
-            #     await validator(form, self)
-            # else:
-            #     validator(form, self)
         except StopValidation as e:
             if e.args and e.args[0]:
                 self.errors.append(e.args[0])

@@ -12,7 +12,7 @@ from wtforms.fields.core import Field
 from ._patch import patch
 from .recaptcha import RecaptchaField
 
-__version__ = '1.0.2.dev0'
+__version__ = '1.0.3.dev0'
 
 __all__ = [
     'SanicForm',

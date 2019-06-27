@@ -1,7 +1,6 @@
 sudo: false
 language: python
 python:
-  - 3.5
   - 3.6
 # <Workaround>. Python 3.7 not yet supported on Travis
 matrix:

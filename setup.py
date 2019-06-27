@@ -36,7 +36,11 @@ setup(
     include_package_data=True,
     install_requires=[
         'sanic',
-        'wtforms',
+        # this lib monkey patches wtforms to add async capabilities.
+        # We're hard coding the version here
+        # in order to avoid any unexpected changes
+        # that might break this lib
+        'wtforms==2.2.1',
         'aio-recaptcha>=0.0.8',
         'markupsafe'
     ],

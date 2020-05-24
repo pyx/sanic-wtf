@@ -12,6 +12,6 @@ def app():
     @test_app.middleware('request')
     async def add_session(request):
         name = request.app.config.get('WTF_CSRF_CONTEXT_NAME', 'session')
-        request[name] = session
+        setattr(request.ctx, name, session)
 
     return test_app

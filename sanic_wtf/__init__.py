@@ -46,7 +46,7 @@ def meta_for_request(request):
     meta['csrf_time_limit'] = timedelta(seconds=seconds)
 
     name = config.get('WTF_CSRF_CONTEXT_NAME', 'session')
-    meta['csrf_context'] = request[name]
+    meta['csrf_context'] = getattr(request.ctx, name)
     return meta
 
 

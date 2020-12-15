@@ -5,7 +5,7 @@ Prerequisites
 =============
 
 To enable CSRF protection, a session is required, Sanic-WTF expects
-:code:`request['session']` is available in this case.  For a simple client side
+:code:`request.ctx.session` is available in this case.  For a simple client side
 only, cookie-based session, similar to Flask's built-in session, you might want
 to try `Sanic-CookieSession`_.
 

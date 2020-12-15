@@ -190,7 +190,7 @@ def test_file_upload(app):
         return response.html(content)
 
     req, resp = app.test_client.post(
-        '/upload', data={'upload': open(__file__, 'rb')})
+        '/upload', files={'upload': open(__file__, 'rb')}, data={})
     assert resp.status == 200
     assert resp.text == os.path.basename(__file__)
 

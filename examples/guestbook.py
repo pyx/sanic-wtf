@@ -10,13 +10,13 @@ app.config['SECRET_KEY'] = 'top secret !!!'
 
 
 # NOTE
-# session should be setup somewhere, SanicWTF expects request['session'] is a
+# session should be setup somewhere, SanicWTF expects request.ctx.session is a
 # dict like session object.
 # For demonstration purpose, we use a mock-up globally-shared session object.
 session = {}
 @app.middleware('request')
 async def add_session(request):
-    request['session'] = session
+    request.ctx.session = session
 
 
 class FeedbackForm(SanicForm):

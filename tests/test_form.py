@@ -1,27 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
 import os.path
+import asyncio
 
 from sanic import response
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, ValidationError
 from wtforms import FileField, StringField, SubmitField
 
 from sanic_wtf import SanicForm, to_bytes
-
-
-# NOTE
-# taking shortcut here, assuming there will be only one "string" (the token)
-# ever longer than 40.
-csrf_token_pattern = '''value="([0-9a-f#]{40,})"'''
-
-
-def render_form(form, multipart=False):
-    if multipart is True:
-        multipart = ' enctype="multipart/form-data"'
-    return """
-    <form action="" method="POST"{}>
-    {}
-    </form>""".format(multipart, ''.join(str(field) for field in form))
+from .helpers import render_form, csrf_token_pattern
 
 
 def test_form_validation(app):
@@ -102,6 +89,7 @@ def test_secret_key_required(app):
     # the server should render ValueError: no secret key message with 500
     assert resp.status == 500
     assert 'ValueError' in resp.text
+    assert 'CSRF protection needs either WTF_CSRF_SECRET_KEY or SECRET_KEY' in resp.text
 
 
 def test_csrf_token(app):
@@ -172,7 +160,6 @@ def test_validate_on_submit(app):
     req, resp = app.test_client.post('/', data=payload)
     assert resp.status == 200
     assert 'validated' in resp.text
-
 
 def test_file_upload(app):
     app.config['WTF_CSRF_ENABLED'] = False

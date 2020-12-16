@@ -3,7 +3,7 @@ Sanic-WTF - Sanic meets WTForms
 ===============================
 
 Sanic-WTF makes using `WTForms` with `Sanic`_ and CSRF (Cross-Site Request
-Forgery) protection a little bit easier.
+Forgery) protection a little bit easier now with Recaptcha and async validators.
 
 
 .. _WTForms: https://github.com/wtforms/wtforms
@@ -19,7 +19,7 @@ Installation
 
 .. code-block:: sh
 
-  pip install --upgrade Sanic-WTF
+  pip install Sanic-WTF
 
 
 How to use it
@@ -37,6 +37,8 @@ Intialization (of Sanic)
 
   # either WTF_CSRF_SECRET_KEY or SECRET_KEY should be set
   app.config['WTF_CSRF_SECRET_KEY'] = 'top secret!'
+  app.config['RECAPTCHA_PUBLIC_KEY'] = 'Public key'
+  app.config['RECAPTCHA_PRIVATE_KEY'] = 'Private key'
 
   @app.middleware('request')
   async def add_session_to_request(request):
@@ -48,14 +50,23 @@ Defining Forms
 
 .. code-block:: python
 
-  from sanic_wtf import SanicForm
+  from sanic_wtf import SanicForm, RecaptchaField
   from wtforms import PasswordField, StringField, SubmitField
   from wtforms.validators import DataRequired
 
-  class LoginForm(SanicForm):
-      name = StringField('Name', validators=[DataRequired()])
+  async def email_not_exist_validator(form, field):
+      user_id = await get_user_id_by_email(
+          conn=form.request.app.db,
+          email=form.signup_email.data
+      )
+      if user_id:
+          raise ValidationError('A user with the given email already exists')
+
+  class SignupForm(SanicForm):
+      email = StringField('Email', validators=[DataRequired(), email_not_exist_validator])
       password = PasswordField('Password', validators=[DataRequired()])
       submit = SubmitField('Sign In')
+      recaptcha = RecaptchaField('recaptcha')
 
 That's it, just subclass `SanicForm` and later on passing in the current
 `request` object when you instantiate the form class.  Sanic-WTF will do the
@@ -72,7 +83,8 @@ Form Validation
   @app.route('/', methods=['GET', 'POST'])
   async def index(request):
       form = LoginForm(request)
-      if request.method == 'POST' and form.validate():
+      if request.method == 'POST' and \ 
+         await form.validate_on_submit_async():
           name = form.name.data
           password = form.password.data
           # check user password, log in user, etc.

@@ -7,12 +7,16 @@ from wtforms import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 from wtforms.validators import DataRequired, StopValidation
+from wtforms.fields.core import Field
 
-__version__ = '0.6.0.dev0'
+from ._patch import patch
+from .recaptcha import RecaptchaField
+
+__version__ = '1.0.3.dev0'
 
 __all__ = [
     'SanicForm',
-    'FileAllowed', 'file_allowed', 'FileRequired', 'file_required',
+    'FileAllowed', 'file_allowed', 'FileRequired', 'file_required', 'RecaptchaField'
 ]
 
 
@@ -111,7 +115,6 @@ class ChainRequestParameters(ChainMap):
         """
         return super().get(name, default)
 
-
 class SanicForm(Form):
     """Form with session-based CSRF Protection.
 
@@ -124,10 +127,15 @@ class SanicForm(Form):
         csrf_class = SessionCSRF
 
     def __init__(self, request=None, *args, meta=None, **kwargs):
+        # Patching status
+        self.patched = False
+
+        # Meta
         form_meta = meta_for_request(request)
         form_meta.update(meta or {})
         kwargs['meta'] = form_meta
 
+        # Formdata
         self.request = request
         if request is not None:
             formdata = kwargs.pop('formdata', sentinel)
@@ -142,7 +150,35 @@ class SanicForm(Form):
 
         super().__init__(*args, **kwargs)
 
+        # Pass app to fields that need it 
+        if self.request is not None:
+            for name, field in self._fields.items():
+                if hasattr(field, '_get_app'):
+                    field._get_app(self.request.app)
+
+    # @unpatch ??
     def validate_on_submit(self):
+        ''' For async validators: use self.validate_on_submit_async.
+            This method is only still here for backward compatibility
+        '''
+        if self.patched is not False:
+            raise RuntimeError('Once you go async, you can never go back. :)\
+                                Continue using validate_on_submit_async \
+                                 instead of validate_on submit')
         """Return `True` if this form is submited and all fields verified"""
-        request = self.request
-        return request and request.method in SUBMIT_VERBS and self.validate()
+        return self.request and (self.request.method in SUBMIT_VERBS) and \
+               self.validate()
+
+    @patch
+    async def validate_on_submit_async(self):
+        ''' Adds support for async validators and Sanic-WTF Recaptcha 
+
+        .. note::
+        
+            As a side effect of patching wtforms to support async, 
+            there's a restriction you must be aware of:
+            Don't use SanifForm.validate_on_submit() (the sync version) after running this method.
+            Doing so will most likely cause an error.
+        '''
+        return self.request and (self.request.method in SUBMIT_VERBS) and \
+               await self.validate()

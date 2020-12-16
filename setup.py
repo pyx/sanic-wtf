@@ -28,7 +28,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -37,7 +36,13 @@ setup(
     include_package_data=True,
     install_requires=[
         'sanic',
-        'wtforms',
+        # this lib monkey patches wtforms to add async capabilities.
+        # We're hard coding the version here
+        # in order to avoid any unexpected changes
+        # that might break this lib
+        'wtforms==2.2.1',
+        'aio-recaptcha>=0.0.8',
+        'markupsafe'
     ],
     extras_require={
         'dev': [
@@ -45,6 +50,7 @@ setup(
             'flake8',
             'pytest',
             'pytest-cov',
+            'pytest-asyncio',
             'Sphinx',
             'tox',
             'twine',

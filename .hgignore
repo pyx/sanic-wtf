@@ -1,11 +1,7 @@
 syntax: regexp
 
 syntax: glob
-.bzr
-.git
-.svn
-.coverage
-.tox
+.*
 
 tags
 .tags

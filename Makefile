@@ -41,7 +41,7 @@ doc-pdf: test
 	cd $(DOCS_DIR); $(MAKE) latexpdf
 
 .PHONY: release
-release: quality tox
+release: clean quality tox
 	@echo 'Checking release version, abort if attempt to release a dev version.'
 	echo '$(VERSION)' | grep -qv dev
 	@echo 'Bumping version number to $(VERSION), abort if no pending changes.'
@@ -74,3 +74,5 @@ quality:
 clean:
 	cd $(DOCS_DIR) && $(MAKE) clean
 	rm -rf build/ dist/ htmlcov/ *.egg-info MANIFEST $(DOCS_DIR)/conf.pyc *~
+	rm -rf sanic_wtf/__pycache__/ tests/__pycache__/ examples/__pycache__/
+	rm -rf .tox/ .pytest_cache/

@@ -115,7 +115,7 @@ def test_csrf_token(app):
     @app.route('/', methods=['GET', 'POST'])
     async def index(request):
         form = TestForm(request)
-        return response.text(form.csrf_token)
+        return response.html(form.csrf_token)
 
     req, resp = app.test_client.get('/')
     assert resp.status == 200

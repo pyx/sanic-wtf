@@ -65,6 +65,12 @@ File Upload
 Changelog
 =========
 
+- 0.6.0
+
+  **backward incompatible upgrade**
+
+  Supporting python 3.6, 2.7, 3.8, 3.9, and Sanic 20.3.0
+
 - 0.5.0
 
   Added file upload support and filefield validators :class:`FileAllowed` and

@@ -104,9 +104,6 @@ Links
 
 - `Source Package @ PyPI <https://pypi.python.org/pypi/sanic-wtf/>`_
 
-- `Mercurial Repository @ bitbucket
-  <https://bitbucket.org/pyx/sanic-wtf/>`_
-
 - `Git Repository @ Github
   <https://github.com/pyx/sanic-wtf/>`_
 

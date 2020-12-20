@@ -34,8 +34,6 @@ async def index(request):
         return response.redirect('/')
     # NOTE: trusting user input here, never do that in production
     feedback = ''.join('<p>{}</p>'.format(m) for m in session.get('fb', []))
-    # Ah, f string, so, python 3.6, what do you expect from someone brave
-    # enough to use sanic... :)
     content = f"""
     <h1>Form with CSRF Validation</h1>
     <p>Try <a href="/fail">form</a> that fails CSRF validation</p>

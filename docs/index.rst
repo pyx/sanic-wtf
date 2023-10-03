@@ -65,7 +65,7 @@ File Upload
 Changelog
 =========
 
-- 0.7.0.dev0
+- 0.7.0
 
   **backward incompatible upgrade**
 

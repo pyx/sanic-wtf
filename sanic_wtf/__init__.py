@@ -3,7 +3,7 @@ from collections import ChainMap
 from datetime import timedelta
 from itertools import chain
 
-from wtforms import Form
+from wtforms.form import Form
 from wtforms.csrf.session import SessionCSRF
 from wtforms.meta import DefaultMeta
 from wtforms.validators import DataRequired, StopValidation

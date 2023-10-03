@@ -1,7 +1,7 @@
 from datetime import datetime
 from sanic import Sanic, response
 from sanic_wtf import SanicForm
-from wtforms import SubmitField, TextField
+from wtforms.fields import SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length
 
 
@@ -20,7 +20,7 @@ async def add_session(request):
 
 
 class FeedbackForm(SanicForm):
-    note = TextField('Note', validators=[DataRequired(), Length(max=40)])
+    note = TextAreaField('Note', validators=[DataRequired(), Length(max=40)])
     submit = SubmitField('Submit')
 
 

@@ -65,6 +65,13 @@ File Upload
 Changelog
 =========
 
+- 0.7.0.dev0
+
+  **backward incompatible upgrade**
+
+  Upgraded to Sanic 21.3.0 and WTForms 3.0.1
+  Minimum python version 3.7
+
 - 0.6.0
 
   **backward incompatible upgrade**

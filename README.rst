@@ -2,7 +2,7 @@
 Sanic-WTF - Sanic meets WTForms
 ===============================
 
-Sanic-WTF makes using `WTForms` with `Sanic`_ and CSRF (Cross-Site Request
+Sanic-WTF makes using `WTForms`_ with `Sanic`_ and CSRF (Cross-Site Request
 Forgery) protection a little bit easier.
 
 

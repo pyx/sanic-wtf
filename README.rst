@@ -6,7 +6,7 @@ Sanic-WTF makes using `WTForms` with `Sanic`_ and CSRF (Cross-Site Request
 Forgery) protection a little bit easier.
 
 
-.. _WTForms: https://github.com/wtforms/wtforms
+.. _WTForms: https://wtforms.readthedocs.io/en/3.0.x/
 .. _Sanic: https://github.com/channelcat/sanic
 
 
@@ -49,7 +49,7 @@ Defining Forms
 .. code-block:: python
 
   from sanic_wtf import SanicForm
-  from wtforms import PasswordField, StringField, SubmitField
+  from wtforms.fields import PasswordField, StringField, SubmitField
   from wtforms.validators import DataRequired
 
   class LoginForm(SanicForm):

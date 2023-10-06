@@ -26,14 +26,21 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/pyx/sanic-wtf/"
 
-[project.optional-dependencies]
-doc = ["Sphinx"]
-lint = ["flake8"]
-test = ["sanic-testing", "pytest-cov"]
-
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+doc = [
+    "Sphinx>=4.3.2",
+]
+lint = [
+    "flake8>=5.0.4",
+]
+test = [
+    "sanic-testing>=23.6.0",
+    "pytest-cov>=4.1.0",
+]
 
 [tool.pdm.scripts]
 doc_html = {shell = "cd docs; make html; cd .."}
